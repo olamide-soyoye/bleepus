@@ -8,4 +8,12 @@ use Illuminate\Database\Eloquent\Model;
 class Business extends Model
 {
     use HasFactory;
+    protected $fillable = [
+        'user_id',
+        'longitude',
+        'latitude',
+        'max_distance',
+        'ratings',
+        'company_name',
+    ];
 }
