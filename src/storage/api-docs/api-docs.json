@@ -1,0 +1,124 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "Bleepus API",
+        "description": "This is the Bleepus API.",
+        "version": "1.0.0"
+    },
+    "servers": [
+        {
+            "url": "http://127.0.0.1:8000/",
+            "description": "API server"
+        }
+    ],
+    "paths": {
+        "/api/auth/register": {
+            "post": {
+                "tags": [
+                    "Register"
+                ],
+                "summary": "Register a new user",
+                "description": "Register a new user",
+                "operationId": "Register",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "fname",
+                                    "lname",
+                                    "email",
+                                    "password"
+                                ],
+                                "properties": {
+                                    "fname": {
+                                        "description": "The user's first name",
+                                        "type": "string"
+                                    },
+                                    "lname": {
+                                        "description": "The user's last name",
+                                        "type": "string"
+                                    },
+                                    "email": {
+                                        "description": "The user's email address",
+                                        "type": "string",
+                                        "format": "email"
+                                    },
+                                    "user_type_id": {
+                                        "description": "User type Id",
+                                        "type": "integer"
+                                    },
+                                    "longitude": {
+                                        "description": "User Longitude",
+                                        "type": "string"
+                                    },
+                                    "latitude": {
+                                        "description": "User latitude",
+                                        "type": "string"
+                                    },
+                                    "password": {
+                                        "description": "The user's password",
+                                        "type": "string",
+                                        "minLength": 8
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "A successful response.",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entry",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Resource not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "tags": [
+        {
+            "name": "Auth",
+            "description": "Authentication related operations"
+        }
+    ],
+    "components": {
+        "securitySchemes": {
+            "sanctum": {
+                "type": "apiKey",
+                "description": "Enter token in format (Bearer <token>)",
+                "name": "Authorization",
+                "in": "header"
+            }
+        }
+    }
+}

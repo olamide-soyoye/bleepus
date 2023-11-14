@@ -1,0 +1,42 @@
+version: "3.3"
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: ./docker/Dockerfile
+    env_file: ./src/.env.docker
+    volumes:
+      - ./src:/home/laravel/site
+    networks:
+      - laravel
+    # command: php artisan migrate --force
+
+  nginx:
+    image: nginx:stable-alpine
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./src:/home/laravel/site
+      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf
+    networks:
+      - laravel
+
+  mysql:
+    image: mysql
+    restart: always
+    env_file: ./src/.env.docker
+    networks:
+      - laravel
+
+  # migrate:
+  #   build: .
+  #   command: php artisan migrate
+  #   depends_on:
+  #     - db
+
+networks:
+  laravel:
+    driver: bridge
