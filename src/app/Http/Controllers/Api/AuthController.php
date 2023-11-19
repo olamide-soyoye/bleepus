@@ -13,15 +13,15 @@ use App\Enums\TokenAbility;
 use App\Models\Business;
 use App\Models\Professional;
 use App\Http\Requests\RegisterRequest;
-// use App\Http\Requests\StoreUserRequest;
+use App\Models\Profile;
 use App\Traits\HttpResponses;
+use Exception;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rules\Password;
 use Illuminate\Validation\ValidationException;
 use OpenApi\Annotations as OA;
-// use App\Http\Controllers\Api\ValidationException;
 
-
+// Swagger Link:  http://127.0.0.1:8000/api/documentation#/Register/Register
 class AuthController extends Controller
 {
     use HttpResponses;
@@ -102,104 +102,71 @@ class AuthController extends Controller
  * )
  */
 
-
-
-    public function register(Request $request) { 
-
+    public function register(Request $request)
+    {
         $validator = $this->validator($request);
-        if ($validator !== true){
+    
+        if ($validator !== true) {
             return $validator;
         }
-        
-        $user = User::create([
-            'fname' => $request->fname,
-            'lname' => $request->lname,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
-        ]);
-
-        $additionalData = [];
-
-        if ($user) {
+    
+        try {
+            DB::beginTransaction();
+    
+            $user = User::create([
+                'fname' => $request->fname,
+                'mname' => $request->mname,
+                'lname' => $request->lname,
+                'email' => $request->email,
+                'phone_no' => $request->phone_no,
+                'user_type_id' => $request->user_type_id,
+                'password' => Hash::make($request->password),
+            ]);
+    
             $token = $user->createToken('API TOKEN')->plainTextToken;
-            if ($request->user_type_id === 1 ) {
+    
+            $profile = Profile::create([
+                'user_id' => $user->id,
+                'address' => $request->address,
+                'total_earnings' => 0,
+            ]);
+    
+            $additionalData = ['profile' => $profile];
+    
+            if ($request->user_type_id === 1) {
                 $professional = Professional::create([
                     'user_id' => $user->id,
                     'longitude' => $request->longitude,
-                    'latitude' => $request->latitude, 
+                    'latitude' => $request->latitude,
+                    'profile_id' => $profile->id,
                 ]);
-                $additionalData = ['professional' => $professional];
-            }
-
-            if ($request->user_type_id === 2 ) {
+    
+                $additionalData['professional'] = $professional;
+            } elseif ($request->user_type_id === 2) {
                 $business = Business::create([
                     'user_id' => $user->id,
                     'longitude' => $request->longitude,
-                    'latitude' => $request->latitude, 
-                    'company_name' => $request->company_name, 
+                    'latitude' => $request->latitude,
+                    'company_name' => $request->company_name,
+                    'profile_id' => $profile->id,
                 ]);
-                $additionalData = ['business' => $business];
+    
+                $additionalData['business'] = $business;
             }
+    
+            DB::commit();
     
             return $this->success([
                 'user' => $user,
                 'additional_data' => $additionalData,
                 'token' => $token,
-            ],201);
-            
-        } else {
-            return $this->error('Error', "User registration failed", 400);
+            ], 201);
+        } catch (Exception $e) {
+            DB::rollBack();
+    
+            return $this->error('Error', "An error occurred: " . $e->getMessage(), 500);
         }
     }
-    // public function register(RegisterRequest $request){
-    //     return $request;
-    //     $validatedData = $request->validated();
-
-    //     return DB::transaction(function () use ($validatedData) {
-    //         $user = User::create([
-    //             'fname' => $validatedData['fname'],
-    //             'lname' => $validatedData['lname'],
-    //             'email' => $validatedData['email'],
-    //             'password' => Hash::make($validatedData['password']),
-    //         ]);
-
-    //         if (!$user) {
-    //             return $this->error('Error', "User registration failed", 400);
-    //         }
-    //         return $user;
-    //         $token = $user->createToken('API TOKEN')->plainTextToken;
-    //         $additionalData = null;
-
-    //         if ($validatedData['user_type_id'] === 1) {
-    //             $professional = Professional::create([
-    //                 'user_id' => $user->id,
-    //                 'longitude' => $validatedData['longitude'],
-    //                 'latitude' => $validatedData['latitude'],
-    //             ]);
-
-    //             $additionalData = ['professional' => $professional];
-    //         }
-
-    //         if ($validatedData['user_type_id'] === 2) {
-    //             $business = Business::create([
-    //                 'user_id' => $user->id,
-    //                 'longitude' => $validatedData['longitude'],
-    //                 'latitude' => $validatedData['latitude'],
-    //                 'company_name' => $validatedData['company_name'],
-    //             ]);
-
-    //             $additionalData = ['business' => $business];
-    //         }
-
-    //         return $this->success([
-    //             'user' => $user,
-    //             'additional_data' => $additionalData,
-    //             'token' => $token,
-    //         ], 201);
-    //     });
-    // }
-
-
 
     private function validator($request){
         try {
@@ -254,43 +221,19 @@ class AuthController extends Controller
         });
         return $this->success([
             'message' => 'Successfully logged out',
-        ]);
-        // return response()->json(['message' => 'Successfully logged out']);
+        ],200);
     }
     
-    public function refreshToken(Request $request)
-{
-    return $request;
-    // $refreshToken = $request->input('refresh_token');
-
-    // // Validate the refresh token
-    // $refreshToken = Tokens::where('token', $refreshToken)->first();
-
-    // if (!$refreshToken || $refreshToken->isExpired()) {
-    //     return response()->json(['message' => 'Invalid refresh token'], 401);
-    // }
-
-    // // Generate a new access token
-    // $accessToken = $refreshToken->user->createToken('API TOKEN')->accessToken;
-
-    // // Revoke the old access token
-    // $refreshToken->revoke();
-
-    // // Return the new access token
-    // return response()->json([
-    //     'access_token' => $accessToken->plainTextToken,
-    //     'expires_at' => $accessToken->expires_at,
-    // ]);
-}
+    
 
     public function getLocationsAround(){
         $merchantALongitude = 3.9213518654370594; 
         $merchantALatitude = 6.83631976776148; // Ibadan garage or fontana
 
         // Gets all jobs within 2 miles of the given latitude and longitude (professional)
-        $jobs = User::withinDistanceOf(4.033783866199626, 6.778648608484787, 2)->get();
+        // $jobs = User::withinDistanceOf(4.033783866199626, 6.778648608484787, 2)->get();
         // Gets all jobs within 2 miles of the given latitude and longitude (professional)
-        return $jobs;
+        // return $jobs;
         // $merchants = User::all(); // Assuming you have a Merchant model
 
         // $filteredMerchants = $merchants->filter(function ($merchant) use ($merchantALatitude, $merchantALongitude) {

@@ -15,5 +15,11 @@ class Business extends Model
         'max_distance',
         'ratings',
         'company_name',
+        'profile_id'
     ];
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
 }

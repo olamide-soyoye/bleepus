@@ -17,6 +17,7 @@ return new class extends Migration
             $table->id();
             // $table->integer('user_id')->nullable();
             $table->uuid('user_id')->nullable();
+            $table->uuid('profile_id')->nullable();
             $table->string('company_name')->nullable();
             $table->integer('max_distance')->nullable();
             $table->string('longitude')->nullable();

@@ -12,6 +12,7 @@ class Professional extends Model
     protected $fillable = [
         'user_id',
         'longitude',
+        'profile_id',
         'latitude',
         'max_distance',
         'profession_title',
@@ -20,6 +21,11 @@ class Professional extends Model
         'years_of_experience',
         'wage',
         'status',
-        'ratings',
+        'ratings'
     ];
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
 }

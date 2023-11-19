@@ -21,43 +21,33 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 });
 
 Route::middleware(['auth:sanctum', 'throttle:5,1'])->group(function () {
-    //Test endpoint to see how to pass token
-    Route::post('auth/refresh',
-        [
-            Api\AuthController::class, 
-            'refreshToken'
-        ]
-    )->middleware('throttle:5,1')->name('api.auth.refresh');
+    //logout
+    Route::post('auth/logout', [ Api\AuthController::class, 'logout'])->name('api.auth.logout');
 
 
-    Route::get('jobs/around',
-        [
-            Api\AuthController::class, 
-            'getLocationsAround'
-        ]
-    )->middleware('throttle:5,1')->name('api.jobs.around');
+    Route::prefix('user')->middleware('throttle:5,1')->group(function () {
+        Route::get('profile', [Api\UserController::class, 'getUserProfile'])->name('api.user.profile');
+        Route::put('profile', [Api\UserController::class, 'updateUserProfile'])->name('api.update.user.profile');
+        Route::put('profile/picture', [Api\UserController::class, 'updateProfilePicture'])->name('api.update.profile.picture');
+        Route::delete('account', [Api\UserController::class, 'deleteUserAccount'])->name('api.delete.user.profile');
+    });
+    
+    Route::get('professionals/around', [Api\UserController::class, 'getProfessionalsWithinRange'])
+    ->middleware('throttle:5,1')->name('api.professionals.around');
+
+    Route::get('businesses/around', [Api\UserController::class, 'getHealthCareProvidersWithinRange'])
+    ->middleware('throttle:5,1')->name('api.businesses.around');
 });
 
-Route::post('auth/register',
-    [
-        Api\AuthController::class, 
-        'register'
-    ]
-)->middleware('throttle:5,1')->name('api.auth.register');
+Route::get('user/types', [ Api\UserController::class, 'userTypes' ])->middleware('throttle:5,1')->name('api.user.types');
 
-Route::post('auth/login',
-    [
-        Api\AuthController::class, 
-        'login'
-    ]
-)->middleware('throttle:5,1')->name('api.auth.login');
-
-Route::post('auth/logout',
-    [
-        Api\AuthController::class, 
-        'logout'
-    ]
-)->name('api.auth.logout');
+Route::prefix('auth')->middleware('throttle:5,1')->group(function () { 
+    Route::post('/register', [ Api\AuthController::class, 'register'])->name('api.auth.register');
+    Route::post('/login',[ Api\AuthController::class, 'login' ])->name('api.auth.login');
+    Route::get('/forgot-password', [Api\ResetPasswordController::class, 'reset'])->name('password.reset');
+    Route::post('/forgot-password', [Api\PasswordResetController::class, '__invoke']);
+    // Route::post('/reset-password', [Api\PasswordResetController::class, 'resetPassword'])->name('password.update');
+});
 
 Route::get('/swagger', function () {
     return view('swagger.index');
