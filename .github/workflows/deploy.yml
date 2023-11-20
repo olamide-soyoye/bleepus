@@ -54,7 +54,7 @@ name: Deploy
 
 on:
   push:
-    branches: [ dev ]
+    branches: [ main ]
 
 jobs:
   Deploy:
