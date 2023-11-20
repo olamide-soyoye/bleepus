@@ -2,13 +2,13 @@ name: Deploy
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
   Deploy:
     name: Deploy to EC2
     runs-on: ubuntu-latest
-       
+    
     steps:
       - uses: actions/checkout@v2 
       
@@ -21,25 +21,17 @@ jobs:
         run: |
           echo "$PRIVATE_KEY" > private_key && chmod 600 private_key
           
-          # Debugging: Print private key content
-          cat private_key
+          # Create ~/.ssh directory if not exists
+          mkdir -p ~/.ssh
           
-          # Debugging: Print known_hosts content
+          # Update known_hosts
+          ssh-keyscan -H ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
+          
+          # Debugging: Print the contents of known_hosts
           cat ~/.ssh/known_hosts
           
-          # Debugging: Print current directory
-          pwd
-          
-          # Debugging: Print list of files in the current directory
-          ls -la
-          
+          # Rest of your deployment script
           ssh -o StrictHostKeyChecking=no -i private_key ${USER_NAME}@${HOSTNAME} '
-              # Debugging: Print the current directory on the remote server
-              pwd
-              
-              # Debugging: Print list of files in the current directory on the remote server
-              ls -la
-              
               cd /var/www/bleepus-backend &&
               git pull &&
               composer install --no-dev &&
