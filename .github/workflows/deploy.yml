@@ -1,50 +1,25 @@
 name: Laravel Deployment
-
 on:
-  push:
-    branches:
-      - main
-
+ push:
+ branches:
+ - main
 jobs:
-  deploy:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v2
-
-      - name: Set up PHP
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: '8.0'
-
-      - name: Install dependencies
-        run: |
-          cd src
-          composer install --no-dev
-
-      # - name: Set up AWS CLI
-      #   uses: aws-actions/configure-aws-credentials@v1
-      #   with:
-      #     aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-      #     aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-      #     aws-region: ${{ secrets.AWS_REGION }}
-
-      # - name: Create known_hosts file
-      #   run: |
-      #     mkdir -p ~/.ssh
-      #     touch ~/.ssh/known_hosts
-
-      # - name: Remove existing known host key
-      #   run: ssh-keygen -R ${{ secrets.AWS_INSTANCE_IP }}
-
-      # - name: Update known hosts
-      #   run: |
-      #     ssh-keyscan -H ${{ secrets.AWS_INSTANCE_IP }} >> ~/.ssh/known_hosts
-
-      - name: Deploy to AWS EC2
-        run: |
-          mkdir -p ~/.ssh
-          cp $GITHUB_WORKSPACE/.github/workflows/bleepus.pem ~/.ssh/bleepus.pem
-          chmod 600 ~/.ssh/bleepus.pem
-
-          ssh -i ~/.ssh/bleepus.pem ubuntu@ec2-16-171-116-255.eu-north-1.compute.amazonaws.com "cd /var/www/html && git pull && composer install --no-dev && php artisan migrate --force && php artisan optimize"
+ deploy:
+ runs-on: ubuntu-latest
+steps:
+ - name: Checkout repository
+ uses: actions/checkout@v2
+- name: Set up PHP
+ uses: shivammathur/setup-php@v2
+ with:
+ php-version: '8.0'
+- name: Install dependencies
+ run: composer install - no-dev
+- name: Set up AWS CLI
+ uses: aws-actions/configure-aws-credentials@v1
+ with:
+ aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+ aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+ aws-region: ${{ secrets.AWS_REGION }}
+- name: Deploy to AWS EC2
+ run: ssh ${{ secrets.AWS_INSTANCE_IP }} "cd /var/www/html && git pull && composer install - no-dev && php artisan migrate - force && php artisan optimize"
