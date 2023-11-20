@@ -28,4 +28,4 @@ jobs:
           aws-region: ${{ secrets.AWS_REGION }}
 
       - name: Deploy to AWS EC2
-        run: ssh ${{ secrets.AWS_INSTANCE_IP }} "cd /var/www/html && git pull && composer install --no-dev && php artisan migrate --force && php artisan optimize"
+        run: ssh ${{ secrets.AWS_INSTANCE_IP }} "cd /var/www/bleepus-backend && git pull && composer install --no-dev && php artisan migrate --force && php artisan optimize"
