@@ -35,7 +35,7 @@ jobs:
               cd /var/www/bleepus &&
               sudo git pull &&
               cd /var/www/bleepus/src &&
-              composer install --no-dev 
+              sudo composer install --no-dev 
               #&&
               # php artisan migrate --force &&
               # php artisan optimize  
