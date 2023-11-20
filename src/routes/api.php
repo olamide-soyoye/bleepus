@@ -40,6 +40,7 @@ Route::middleware(['auth:sanctum', 'throttle:5,1'])->group(function () {
 });
 
 Route::get('user/types', [ Api\UserController::class, 'userTypes' ])->middleware('throttle:5,1')->name('api.user.types');
+Route::get('/test', [ Api\UserController::class, 'test' ])->middleware('throttle:5,1')->name('api.test');
 
 Route::prefix('auth')->middleware('throttle:5,1')->group(function () { 
     Route::post('/register', [ Api\AuthController::class, 'register'])->name('api.auth.register');

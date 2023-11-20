@@ -170,4 +170,8 @@ class UserController extends Controller
         return $this->error('Error', 'Unable to delete user', 400);
     }
 
+    public function test(){
+        return ["Hello Dev Sam!!","I am up and running"];
+    }
+
 }
