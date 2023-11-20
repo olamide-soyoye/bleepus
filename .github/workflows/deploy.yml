@@ -31,4 +31,13 @@ jobs:
           cat ~/.ssh/known_hosts
           
           # Rest of your deployment script
-          ssh -o StrictHostKeyChecking=no -i private_key ${USER_NAME}@${HOSTNAME} 'cd /var/www/bleepus && sudo git pull && cd /var/www/bleepus/src && sudo composer install --no-dev && php artisan migrate --force && sudo php artisan db:seed --force && php artisan optimize:clear && sudo php artisan l5-swagger:generate'
+          ssh -o StrictHostKeyChecking=no -i private_key ${USER_NAME}@${HOSTNAME} '
+              cd /var/www/bleepus &&
+              sudo git pull &&
+              cd /var/www/bleepus/src &&
+              sudo composer install --no-dev &&
+             sudo php artisan migrate --force &&
+             sudo php artisan db:seed --force &&
+            sudo  php artisan optimize:clear &&
+            sudo php artisan l5-swagger:generate
+          '
