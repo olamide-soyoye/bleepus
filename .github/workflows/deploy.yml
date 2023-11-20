@@ -48,4 +48,4 @@ jobs:
 
       - name: Deploy to AWS EC2
         run: |
-          ssh -i private_key.pem ${{ secrets.AWS_INSTANCE_IP }} "cd /var/www/html && git pull && composer install --no-dev && php artisan migrate --force && php artisan optimize"
+          ssh -i private_key.pem ec2-16-171-116-255.eu-north-1.compute.amazonaws.com "cd /var/www/html && git pull && composer install --no-dev && php artisan migrate --force && php artisan optimize"
