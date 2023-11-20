@@ -25,7 +25,7 @@ class UserController extends Controller
             return $this->error('Error', 'Unable to find businesses', 400);
         }
 
-        $maxDistance = $business->max_distance ?? 2;
+        $maxDistance = $business->max_distance ? $business->max_distance : 2;
 
         $professionalsAround = Professional::withinDistanceOf(
             $business->latitude, 
@@ -46,7 +46,7 @@ class UserController extends Controller
             return $this->error('Error', 'Unable to find professionals', 400);
         }
 
-        $maxDistance = $professional->max_distance ?? 2;
+        $maxDistance = $professional->max_distance ? $professional->max_distance : 2;
 
         $businessesAround = Business::withinDistanceOf(
             $professional->latitude, 
@@ -84,7 +84,7 @@ class UserController extends Controller
 
     public function userTypes(){
         return $this->success([
-            UserType::all()??[],
+            UserType::all(),
         ], 200);
     }
     
