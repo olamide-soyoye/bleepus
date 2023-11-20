@@ -29,6 +29,11 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
 
+      - name: Create known_hosts file
+        run: |
+          mkdir -p ~/.ssh
+          touch ~/.ssh/known_hosts
+
       - name: Update known hosts
         run: |
           ssh-keyscan -H ${{ secrets.AWS_INSTANCE_IP }} >> ~/.ssh/known_hosts
@@ -39,4 +44,4 @@ jobs:
           cp $GITHUB_WORKSPACE/bleepus.pem ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
 
-          ssh -i ~/.ssh/id_rsa ${{ secrets.AWS_INSTANCE_IP }} "cd /var/www/html && git pull && composer install --no-dev && php artisan migrate --force && php artisan optimize"
+          ssh -i ~/.ssh/id_rsa ${{ secrets.AWS_INSTANCE_IP }} "cd /var/www/bleepus-backend/src && git pull && composer install --no-dev && php artisan migrate --force && php artisan optimize"
