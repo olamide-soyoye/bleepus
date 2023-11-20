@@ -41,7 +41,7 @@ jobs:
       - name: Deploy to AWS EC2
         run: |
           mkdir -p ~/.ssh
-          cp $GITHUB_WORKSPACE/bleepus.pem ~/.ssh/id_rsa
+             cp $GITHUB_WORKSPACE/.github/workflows/bleepus.pem ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
 
           ssh -i ~/.ssh/id_rsa ${{ secrets.AWS_INSTANCE_IP }} "cd /var/www/bleepus-backend/src && git pull && composer install --no-dev && php artisan migrate --force && php artisan optimize"
