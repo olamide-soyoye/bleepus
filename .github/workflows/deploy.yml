@@ -19,7 +19,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          cd bleepus/src
+          cd bleepus/bleepus/src
           composer install --no-dev
 
       - name: Set up AWS CLI
