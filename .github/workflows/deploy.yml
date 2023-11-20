@@ -35,10 +35,8 @@ jobs:
               cd /var/www/bleepus &&
               sudo git pull &&
               cd /var/www/bleepus/src &&
-              sudo composer install --no-dev 
-              &&
+              sudo composer install --no-dev &&
               php artisan migrate --force &&
               php artisan db:seed --force &&
-              php artisan optimize clear && 
-              sudo php artisan l5-swagger:generate
+              php artisan optimize clear
           '
