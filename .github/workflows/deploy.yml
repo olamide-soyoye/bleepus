@@ -17,11 +17,17 @@ jobs:
         env:
           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
 
+      - name: Set correct permissions for private key
+        run: chmod 600 private_key.pem
+
       - name: Create SSH directory
         run: mkdir -p ~/.ssh
 
       - name: Update known hosts
         run: ssh-keyscan -H ${{ secrets.AWS_INSTANCE_IP }} >> ~/.ssh/known_hosts
+
+      - name: Debug SSH Connection
+        run: ssh -i private_key.pem -v ${{ secrets.AWS_INSTANCE_IP }} "echo 'SSH Connection successful'"
 
       - name: Set up PHP
         uses: shivammathur/setup-php@v2
