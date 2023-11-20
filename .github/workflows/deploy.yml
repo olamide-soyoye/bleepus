@@ -19,7 +19,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          cd src
+          cd bleepus/src
           composer install --no-dev
 
       - name: Set up AWS CLI
@@ -29,6 +29,14 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
 
+      - name: Update known hosts
+        run: |
+          ssh-keyscan -H ${{ secrets.AWS_INSTANCE_IP }} >> ~/.ssh/known_hosts
+
       - name: Deploy to AWS EC2
         run: |
-          ssh ${{ secrets.AWS_INSTANCE_IP }} "cd /var/www/html && git pull && composer install --no-dev && php artisan migrate --force && php artisan optimize"
+          mkdir -p ~/.ssh
+          cp $GITHUB_WORKSPACE/bleepus.pem ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+
+          ssh -i ~/.ssh/id_rsa ${{ secrets.AWS_INSTANCE_IP }} "cd /var/www/html && git pull && composer install --no-dev && php artisan migrate --force && php artisan optimize"
