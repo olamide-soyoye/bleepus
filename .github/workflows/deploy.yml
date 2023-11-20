@@ -34,6 +34,7 @@ jobs:
           ssh -o StrictHostKeyChecking=no -i private_key ${USER_NAME}@${HOSTNAME} '
               cd /var/www/bleepus &&
               sudo git pull &&
+              cd /var/www/bleepus/src &&
               composer install --no-dev &&
               php artisan migrate --force &&
               php artisan optimize  
