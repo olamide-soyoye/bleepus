@@ -12,6 +12,14 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
 
+      - name: Create SSH key file
+        run: echo "$SSH_PRIVATE_KEY" > private_key.pem
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Update known hosts
+        run: ssh-keyscan -H ${{ secrets.AWS_INSTANCE_IP }} >> ~/.ssh/known_hosts
+
       - name: Set up PHP
         uses: shivammathur/setup-php@v2
         with:
@@ -31,4 +39,4 @@ jobs:
 
       - name: Deploy to AWS EC2
         run: |
-          ssh ${{ secrets.AWS_INSTANCE_IP }} "cd /var/www/html && git pull && composer install --no-dev && php artisan migrate --force && php artisan optimize"
+          ssh -i private_key.pem ${{ secrets.AWS_INSTANCE_IP }} "cd /var/www/html && git pull && composer install --no-dev && php artisan migrate --force && php artisan optimize"
