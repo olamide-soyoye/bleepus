@@ -38,5 +38,5 @@ jobs:
               sudo composer install --no-dev &&
              sudo php artisan migrate --force &&
              sudo php artisan db:seed --force &&
-            sudo  php artisan optimize clear
+            sudo  php artisan optimize:clear
           '
