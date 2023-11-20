@@ -1,0 +1,42 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  Deploy:
+    name: Deploy to EC2
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v2 
+      
+      - name: Build & Deploy
+        env:
+          PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          HOSTNAME: ${{ secrets.SSH_HOST }}
+          USER_NAME: ${{ secrets.USER_NAME }}
+      
+        run: |
+          echo "$PRIVATE_KEY" > private_key && chmod 600 private_key
+          
+          # Create ~/.ssh directory if not exists
+          mkdir -p ~/.ssh
+          
+          # Update known_hosts
+          ssh-keyscan -H ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
+          
+          # Debugging: Print the contents of known_hosts
+          cat ~/.ssh/known_hosts
+          
+          # Rest of your deployment script
+          ssh -o StrictHostKeyChecking=no -i private_key ${USER_NAME}@${HOSTNAME} '
+              cd /var/www/bleepus &&
+              sudo git pull &&
+              cd /var/www/bleepus/src &&
+              sudo composer install --no-dev 
+              #&&
+              # php artisan migrate --force &&
+              # php artisan optimize  
+          '
