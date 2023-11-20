@@ -43,7 +43,6 @@ jobs:
               php artisan db:seed --force &&
               php artisan optimize && 
               php artisan optimize:clear && 
-              php artisan optimize:clear &&
               php artisan l5-swagger:generate &&
               php artisan up
           '
