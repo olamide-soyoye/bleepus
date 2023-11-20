@@ -37,7 +37,7 @@ jobs:
               cd /var/www/bleepus/src &&
               sudo composer install --no-dev 
               &&
-              php artisan down
+              php artisan down &&
               php artisan migrate --force &&
               php artisan storage:link &&
               php artisan db:seed --force &&
