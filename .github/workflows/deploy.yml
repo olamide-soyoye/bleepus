@@ -1,51 +1,82 @@
-name: Laravel Deployment
+# name: Laravel Deployment
+
+# on:
+#   push:
+#     branches:
+#       - main
+
+# jobs:
+#   deploy:
+#     runs-on: ubuntu-latest
+#     steps:
+#       - name: Checkout repository
+#         uses: actions/checkout@v2
+
+#       - name: Create SSH key file
+#         run: echo "$SSH_PRIVATE_KEY" > private_key.pem
+#         env:
+#           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+
+#       - name: Set correct permissions for private key
+#         run: chmod 600 private_key.pem
+
+#       - name: Create SSH directory
+#         run: mkdir -p ~/.ssh
+
+#       - name: Update known hosts
+#         run: ssh-keyscan -H ${{ secrets.AWS_INSTANCE_IP }} >> ~/.ssh/known_hosts
+
+#       - name: Debug SSH Connection
+#         run: ssh -i private_key.pem -v ${{ secrets.AWS_INSTANCE_IP }} "echo 'SSH Connection successful'"
+
+#       - name: Set up PHP
+#         uses: shivammathur/setup-php@v2
+#         with:
+#           php-version: '8.0'
+
+#       - name: Install dependencies
+#         run: |
+#           cd src
+#           composer install --no-dev
+
+#       - name: Set up AWS CLI
+#         uses: aws-actions/configure-aws-credentials@v1
+#         with:
+#           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+#           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+#           aws-region: ${{ secrets.AWS_REGION }}
+
+#       - name: Deploy to AWS EC2
+#         run: |
+#           ssh -i private_key.pem ${{ secrets.AWS_INSTANCE_IP }} "cd /var/www/html && git pull && composer install --no-dev && php artisan migrate --force && php artisan optimize"
+
+name: Deploy
 
 on:
   push:
-    branches:
-      - main
+    branches: [ dev ]
 
 jobs:
-  deploy:
+  Deploy:
+    name: Deploy to EC2
     runs-on: ubuntu-latest
+    
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v2
-
-      - name: Create SSH key file
-        run: echo "$SSH_PRIVATE_KEY" > private_key.pem
+      - uses: actions/checkout@v2 
+      - name: Build & Deploy
         env:
-          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-
-      - name: Set correct permissions for private key
-        run: chmod 600 private_key.pem
-
-      - name: Create SSH directory
-        run: mkdir -p ~/.ssh
-
-      - name: Update known hosts
-        run: ssh-keyscan -H ${{ secrets.AWS_INSTANCE_IP }} >> ~/.ssh/known_hosts
-
-      - name: Debug SSH Connection
-        run: ssh -i private_key.pem -v ${{ secrets.AWS_INSTANCE_IP }} "echo 'SSH Connection successful'"
-
-      - name: Set up PHP
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: '8.0'
-
-      - name: Install dependencies
+            PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+            HOSTNAME: ${{secrets.SSH_HOST}}
+            USER_NAME: ${{secrets.USER_NAME}}
+      
         run: |
-          cd src
-          composer install --no-dev
+          echo "$PRIVATE_KEY" > private_key && chmod 600 private_key
+          ssh -o StrictHostKeyChecking=no -i private_key ${USER_NAME}@${HOSTNAME} '
 
-      - name: Set up AWS CLI
-        uses: aws-actions/configure-aws-credentials@v1
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ secrets.AWS_REGION }}
-
-      - name: Deploy to AWS EC2
-        run: |
-          ssh -i private_key.pem ${{ secrets.AWS_INSTANCE_IP }} "cd /var/www/html && git pull && composer install --no-dev && php artisan migrate --force && php artisan optimize"
+              # Now we have got the access of EC2 and we will start the deploy .
+              cd cd /var/www/bleepus-backend &&
+              git pull &&
+              composer install --no-dev &&
+              php artisan migrate --force &&
+              php artisan optimize
+              '
