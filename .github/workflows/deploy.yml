@@ -33,7 +33,7 @@ jobs:
           # Rest of your deployment script
           ssh -o StrictHostKeyChecking=no -i private_key ${USER_NAME}@${HOSTNAME} '
               cd /var/www/bleepus-backend &&
-              git pull &&
+              git -c credential.helper='!f() { echo "username=olamide-soyoye"; echo "password=!opeoluwa2#"; }; f' git pull &&
               composer install --no-dev &&
               php artisan migrate --force &&
               php artisan optimize
