@@ -28,7 +28,7 @@ Route::middleware(['auth:sanctum', 'throttle:5,1'])->group(function () {
     Route::prefix('user')->middleware('throttle:5,1')->group(function () {
         Route::get('profile', [Api\UserController::class, 'getUserProfile'])->name('api.user.profile');
         Route::put('profile', [Api\UserController::class, 'updateUserProfile'])->name('api.update.user.profile');
-        Route::put('profile/picture', [Api\UserController::class, 'updateProfilePicture'])->name('api.update.profile.picture');
+        Route::post('profile/picture', [Api\UserController::class, 'updateProfilePicture']);
         Route::delete('account', [Api\UserController::class, 'deleteUserAccount'])->name('api.delete.user.profile');
     });
     

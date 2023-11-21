@@ -13,6 +13,7 @@ use App\Traits\HttpResponses;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 class UserController extends Controller
 {
@@ -143,9 +144,32 @@ class UserController extends Controller
         }
     }
 
-    public function updateProfilePicture(){
-        
+    public function updateProfilePicture(Request $request){
+        $user_id = Auth::id();
+
+        if ($profile = Profile::where('user_id', $user_id)->first()) {
+            $request->validate([
+                'profile_pic' => 'image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            ]);
+
+            if ($request->hasFile('profile_pic')) {
+                $path = $request->file('profile_pic')->store('public/images');
+                
+                $profile->profile_pic = $path;
+                $profile->update();
+
+                $imageUrl = Storage::url($path);
+
+                return $this->success([
+                    'message' => 'Profile picture updated successfully',
+                    'image_url' => $imageUrl,
+                ], 200);
+            }
+
+            return $this->error('Error', 'Unable to update profile picture', 400);
+        }
     }
+
 
     public function deleteUserAccount() {
         $userId = Auth::id();

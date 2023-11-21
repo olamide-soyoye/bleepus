@@ -18,7 +18,7 @@ use Illuminate\Routing\Controller as BaseController;
  *     description="This is the Bleepus API.",
  * )
  * @OA\Server(
- *     url="http://127.0.0.1:8000/",
+ *     url="http://ec2-16-171-116-255.eu-north-1.compute.amazonaws.com/",
  *     description="API server"
  * )
  */
