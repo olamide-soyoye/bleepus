@@ -19,6 +19,7 @@ return new class extends Migration
             // $table->integer('user_id')->nullable();
             $table->string('profile_pic')->nullable();
             $table->string('address')->nullable();
+            $table->string('agency_code')->nullable();
             $table->string('about')->nullable();
             $table->string('total_earnings')->nullable();
             $table->timestamps();

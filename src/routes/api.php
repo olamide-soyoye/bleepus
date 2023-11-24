@@ -35,6 +35,7 @@ Route::middleware(['auth:sanctum', 'throttle:5,1'])->group(function () {
     Route::get('professionals/around', [Api\UserController::class, 'getProfessionalsWithinRange'])
     ->middleware('throttle:5,1')->name('api.professionals.around');
 
+
     Route::get('businesses/around', [Api\UserController::class, 'getHealthCareProvidersWithinRange'])
     ->middleware('throttle:5,1')->name('api.businesses.around');
 });

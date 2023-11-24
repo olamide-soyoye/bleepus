@@ -18,7 +18,10 @@ use Illuminate\Support\Facades\Storage;
 class UserController extends Controller
 {
     use HttpResponses;
-    public function getProfessionalsWithinRange(){
+    public function getProfessionalsWithinRange(Request $request){
+        $latitude = $request->latitude ?? null;
+        $longitude = $request->longitude ?? null;
+
         $loggedInUserId = Auth::id();
         $business = Business::where('user_id', $loggedInUserId)->first();
         
@@ -28,9 +31,14 @@ class UserController extends Controller
 
         $maxDistance = $business->max_distance ? $business->max_distance : 2;
 
+        if (!$latitude || !$longitude) {
+            $latitude = $business->latitude;
+            $longitude = $business->longitude;
+        }
+
         $professionalsAround = Professional::withinDistanceOf(
-            $business->latitude, 
-            $business->longitude, 
+            $latitude, 
+            $longitude, 
             $maxDistance
         )->with('user')->get();
 
@@ -39,7 +47,10 @@ class UserController extends Controller
         ], 200);
     }
 
-    public function getHealthCareProvidersWithinRange(){
+    public function getHealthCareProvidersWithinRange(Request $request){
+        $latitude = $request->latitude ?? null;
+        $longitude = $request->longitude ?? null;
+
         $loggedInUserId = Auth::id();
         $professional = Professional::where('user_id', $loggedInUserId)->first();
 
@@ -49,9 +60,14 @@ class UserController extends Controller
 
         $maxDistance = $professional->max_distance ? $professional->max_distance : 2;
 
+        if (!$latitude || !$longitude) {
+            $latitude = $professional->latitude;
+            $longitude = $professional->longitude;
+        }
+
         $businessesAround = Business::withinDistanceOf(
-            $professional->latitude, 
-            $professional->longitude,
+            $latitude, 
+            $longitude,
             $maxDistance
         )->with('user')->get();
 
@@ -112,7 +128,7 @@ class UserController extends Controller
                             'years_of_experience' => $request->years_of_experience,
                             'wage' => $request->wage,
                             'status' => $request->status,
-                            'certifications' => json_encode($request->certifications),
+                            'specialities' => json_encode($request->specialities),
                         ]);
                     }
                 } elseif ($userType == 2) {

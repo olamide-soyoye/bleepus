@@ -105,14 +105,19 @@ class AuthController extends Controller
     public function register(Request $request)
     {
         $validator = $this->validator($request);
-    
+
         if ($validator !== true) {
             return $validator;
         }
-    
+
         try {
             DB::beginTransaction();
-    
+
+            // Check if the email already exists
+            if (User::where('email', $request->email)->exists()) {
+                return $this->error('Validation Error', 'Email already exists', 422);
+            }
+
             $user = User::create([
                 'fname' => $request->fname,
                 'mname' => $request->mname,
@@ -122,17 +127,18 @@ class AuthController extends Controller
                 'user_type_id' => $request->user_type_id,
                 'password' => Hash::make($request->password),
             ]);
-    
+
             $token = $user->createToken('API TOKEN')->plainTextToken;
-    
+
             $profile = Profile::create([
                 'user_id' => $user->id,
                 'address' => $request->address,
                 'total_earnings' => 0,
+                'agency_code' => $request->agency_code,
             ]);
-    
+
             $additionalData = ['profile' => $profile];
-    
+
             if ($request->user_type_id === 1) {
                 $professional = Professional::create([
                     'user_id' => $user->id,
@@ -140,7 +146,7 @@ class AuthController extends Controller
                     'latitude' => $request->latitude,
                     'profile_id' => $profile->id,
                 ]);
-    
+
                 $additionalData['professional'] = $professional;
             } elseif ($request->user_type_id === 2) {
                 $business = Business::create([
@@ -150,12 +156,12 @@ class AuthController extends Controller
                     'company_name' => $request->company_name,
                     'profile_id' => $profile->id,
                 ]);
-    
+
                 $additionalData['business'] = $business;
             }
-    
+
             DB::commit();
-    
+
             return $this->success([
                 'user' => $user,
                 'additional_data' => $additionalData,
@@ -163,10 +169,11 @@ class AuthController extends Controller
             ], 201);
         } catch (Exception $e) {
             DB::rollBack();
-    
+
             return $this->error('Error', "An error occurred: " . $e->getMessage(), 500);
         }
     }
+
 
     private function validator($request){
         try {
@@ -204,12 +211,12 @@ class AuthController extends Controller
         
         if ($user) {
             return response()->json(
-                    [
-                        'user' => $user, 
-                        'access_token' => $user->createToken("API TOKEN")->plainTextToken,
-                        'message' => 'Logged In Successfully'
-                    ], 
-                );
+                [
+                    'user' => $user, 
+                    'access_token' => $user->createToken("API TOKEN")->plainTextToken,
+                    'message' => 'Logged In Successfully'
+                ]
+            );
         } else {
             return response()->json(['message' => 'Invalid credentials'], 401);
         }

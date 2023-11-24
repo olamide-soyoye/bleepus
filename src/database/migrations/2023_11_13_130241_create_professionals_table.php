@@ -24,6 +24,7 @@ return new class extends Migration
             $table->string('profession_title')->nullable();
             $table->string('skills')->nullable();
             $table->string('certifications')->nullable();
+            $table->string('specialities')->nullable();
             $table->string('years_of_experience')->nullable();
             $table->string('wage')->nullable();
             $table->enum('status', ['Available', 'Occupied', 'Not Available'])->nullable()->default('Available');
