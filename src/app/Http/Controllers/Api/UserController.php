@@ -19,8 +19,8 @@ class UserController extends Controller
 {
     use HttpResponses;
     public function getProfessionalsWithinRange(Request $request){
-        $latitude = $request->latitude ?? null;
-        $longitude = $request->longitude ?? null;
+        // $latitude = $request->latitude ?? null;
+        // $longitude = $request->longitude ?? null;
 
         $loggedInUserId = Auth::id();
         $business = Business::where('user_id', $loggedInUserId)->first();
@@ -31,16 +31,16 @@ class UserController extends Controller
 
         $maxDistance = $business->max_distance ? $business->max_distance : 2;
 
-        if (!$latitude || !$longitude) {
+        // if (!$latitude || !$longitude) {
             $latitude = $business->latitude;
             $longitude = $business->longitude;
-        }
+        // }
 
         $professionalsAround = Professional::withinDistanceOf(
             $latitude, 
             $longitude, 
             $maxDistance
-        )->with('user')->get();
+        )->with('user', 'profile')->get();
 
         return $this->success([
             'professionalsAround' => $professionalsAround->isEmpty() ? [] : $professionalsAround,
@@ -55,7 +55,7 @@ class UserController extends Controller
         $professional = Professional::where('user_id', $loggedInUserId)->first();
 
         if (!$professional) {
-            return $this->error('Error', 'Unable to find professionals', 400);
+            return $this->error('Error', 'Unable to find professional', 400);
         }
 
         $maxDistance = $professional->max_distance ? $professional->max_distance : 2;
@@ -69,7 +69,7 @@ class UserController extends Controller
             $latitude, 
             $longitude,
             $maxDistance
-        )->with('user')->get();
+        )->with('user', 'profile')->get();
 
         return $this->success([
             'businessesAround' => $businessesAround->isEmpty() ? [] : $businessesAround,
@@ -114,7 +114,10 @@ class UserController extends Controller
                     $profile->update([
                         'address' => $request->address,
                         'profile_pic' => $request->profile_pic,
+                        'phone_no' => $request->phone_no,
                         'about' => $request->about,
+                        'country_abbr' => $request->countryAbbr,
+                        'country_code' => $request->countryCode,
                         'max_distance' => $request->max_distance,
                     ]);
                 }
@@ -129,6 +132,8 @@ class UserController extends Controller
                             'wage' => $request->wage,
                             'status' => $request->status,
                             'specialities' => json_encode($request->specialities),
+                            'longitude' => $request->longitude,
+                            'latitude' => $request->latitude,
                         ]);
                     }
                 } elseif ($userType == 2) {
@@ -136,6 +141,8 @@ class UserController extends Controller
                         $business->update([
                             'company_name' => $request->company_name,
                             'max_distance' => $request->max_distance,
+                            'longitude' => $request->longitude,
+                            'latitude' => $request->latitude,
                         ]);
                     }
                 }
@@ -143,9 +150,7 @@ class UserController extends Controller
                 if ($user = User::where('id', $user_id)->first()) {
                     $user->update([
                         'fname' => $request->fname,
-                        'mname' => $request->mname,
                         'lname' => $request->lname,
-                        'phone_no' => $request->phone_no,
                     ]);
                 }
             });
@@ -154,9 +159,9 @@ class UserController extends Controller
                 'message' => 'Profile updated successfully',
             ], 200);
         } catch (ModelNotFoundException $e) {
-            return $this->error('Error', 'Unable to update profile', 404);
+            return $this->error('Unable to update profile', $e, 404);
         } catch (\Exception $e) {
-            return $this->error('Error', 'Unable to update profile', 500);
+            return $this->error('Unable to update profile', $e, 500);
         }
     }
 

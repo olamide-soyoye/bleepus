@@ -120,10 +120,8 @@ class AuthController extends Controller
 
             $user = User::create([
                 'fname' => $request->fname,
-                'mname' => $request->mname,
                 'lname' => $request->lname,
                 'email' => $request->email,
-                'phone_no' => $request->phone_no,
                 'user_type_id' => $request->user_type_id,
                 'password' => Hash::make($request->password),
             ]);
@@ -134,6 +132,7 @@ class AuthController extends Controller
                 'user_id' => $user->id,
                 'address' => $request->address,
                 'total_earnings' => 0,
+                'phone_no' => $request->phone_no,
                 'agency_code' => $request->agency_code,
             ]);
 
@@ -207,8 +206,13 @@ class AuthController extends Controller
             return response()->json('Email or Password does not match with our record.');
         }
 
-        $user = User::where('email', $request->email)->first();
-        
+        $user = User::with("business","professional")->where('email', $request->email)->first();
+        if ($user->user_type_id == 2) {
+            unset($user['professional']);
+        }
+        if ($user->user_type_id == 1) {
+            unset($user['business']);
+        }
         if ($user) {
             return response()->json(
                 [

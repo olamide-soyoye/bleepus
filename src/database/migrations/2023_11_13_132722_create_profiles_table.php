@@ -18,10 +18,14 @@ return new class extends Migration
             $table->uuid('user_id')->nullable();
             // $table->integer('user_id')->nullable();
             $table->string('profile_pic')->nullable();
+            $table->string('phone_no')->nullable();
+            $table->string('country_abbr')->nullable();
+            $table->string('country_code')->nullable();
             $table->string('address')->nullable();
             $table->string('agency_code')->nullable();
             $table->string('about')->nullable();
             $table->string('total_earnings')->nullable();
+            $table->string('pending_payment')->nullable();
             $table->timestamps();
         });
     }
