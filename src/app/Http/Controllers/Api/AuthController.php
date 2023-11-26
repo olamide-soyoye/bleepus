@@ -132,6 +132,7 @@ class AuthController extends Controller
                 'user_id' => $user->id,
                 'address' => $request->address,
                 'total_earnings' => 0,
+                'pending_payment' => 0,
                 'phone_no' => $request->phone_no,
                 'agency_code' => $request->agency_code,
             ]);
@@ -203,10 +204,11 @@ class AuthController extends Controller
             'password' => ['required'],
         ]);
         if(!Auth::attempt($request->only(['email', 'password']))){
-            return response()->json('Email or Password does not match with our record.');
+            return $this->error('Error', "Email or Password does not match with our record.", 500);
+            // return response()->json('Email or Password does not match with our record.');
         }
 
-        $user = User::with("business","professional")->where('email', $request->email)->first();
+        $user = User::with("business","professional","profile")->where('email', $request->email)->first();
         if ($user->user_type_id == 2) {
             unset($user['professional']);
         }
