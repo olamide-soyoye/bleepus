@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Professional extends Model
 {
-    use HasFactory; 
+    use HasFactory;
 
     protected $fillable = [
         'user_id',
@@ -22,7 +22,8 @@ class Professional extends Model
         'years_of_experience',
         'wage',
         'status',
-        'ratings'
+        'ratings',
+        'specialities', // Assuming 'specialities' is the attribute you want to handle
     ];
 
     public function user()
@@ -33,5 +34,10 @@ class Professional extends Model
     public function profile(): HasOne
     {
         return $this->hasOne(Profile::class, 'id', 'profile_id');
+    }
+
+    public function getSpecialitiesAttribute($value)
+    {
+        return $value ?? [];
     }
 }

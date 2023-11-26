@@ -15,6 +15,7 @@ use App\Models\Professional;
 use App\Http\Requests\RegisterRequest;
 use App\Models\Profile;
 use App\Traits\HttpResponses;
+use Constants;
 use Exception;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rules\Password;
@@ -135,24 +136,22 @@ class AuthController extends Controller
                 'pending_payment' => 0,
                 'phone_no' => $request->phone_no,
                 'agency_code' => $request->agency_code,
+                'longitude' => $request->longitude,
+                'latitude' => $request->latitude,
             ]);
 
             $additionalData = ['profile' => $profile];
 
-            if ($request->user_type_id === 1) {
+            if ($request->user_type_id === Constants::$professional) {
                 $professional = Professional::create([
                     'user_id' => $user->id,
-                    'longitude' => $request->longitude,
-                    'latitude' => $request->latitude,
                     'profile_id' => $profile->id,
                 ]);
 
                 $additionalData['professional'] = $professional;
-            } elseif ($request->user_type_id === 2) {
+            } elseif ($request->user_type_id === Constants::$business) {
                 $business = Business::create([
                     'user_id' => $user->id,
-                    'longitude' => $request->longitude,
-                    'latitude' => $request->latitude,
                     'company_name' => $request->company_name,
                     'profile_id' => $profile->id,
                 ]);
@@ -209,10 +208,10 @@ class AuthController extends Controller
         }
 
         $user = User::with("business","professional","profile")->where('email', $request->email)->first();
-        if ($user->user_type_id == 2) {
+        if ($user->user_type_id == Constants::$business) {
             unset($user['professional']);
         }
-        if ($user->user_type_id == 1) {
+        if ($user->user_type_id == Constants::$professional) {
             unset($user['business']);
         }
         if ($user) {

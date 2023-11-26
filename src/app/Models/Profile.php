@@ -13,9 +13,16 @@ class Profile extends Model
     protected $fillable = [
         'user_id',
         'profile_pic',
+        'phone_no',
+        'country_abbr',
+        'country_code',
+        'agency_code',
         'address',
         'about', 
-        'total_earnings'
+        'total_earnings',
+        'pending_payment',
+        'latitude',
+        'longitude'
     ];
 
     public function business(): HasOne

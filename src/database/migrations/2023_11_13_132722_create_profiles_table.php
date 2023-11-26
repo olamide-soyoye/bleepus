@@ -26,6 +26,8 @@ return new class extends Migration
             $table->string('about')->nullable();
             $table->string('total_earnings')->nullable();
             $table->string('pending_payment')->nullable();
+            $table->string('longitude')->nullable();
+            $table->string('latitude')->nullable();
             $table->timestamps();
         });
     }

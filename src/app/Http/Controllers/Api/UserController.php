@@ -10,6 +10,7 @@ use App\Models\User;
 use App\Models\UserType;
 use Illuminate\Http\Request;
 use App\Traits\HttpResponses;
+use Constants;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\DB;
@@ -83,10 +84,10 @@ class UserController extends Controller
         ->with("business","professional","user")
         ->first();
 
-        if (Auth::user()->user_type_id == 2) {
+        if (Auth::user()->user_type_id == Constants::$business) {
             unset($profile['professional']);
         }
-        if (Auth::user()->user_type_id == 1) {
+        if (Auth::user()->user_type_id == Constants::$professional) {
             unset($profile['business']);
         }
 
@@ -119,30 +120,28 @@ class UserController extends Controller
                         'country_abbr' => $request->countryAbbr,
                         'country_code' => $request->countryCode,
                         'max_distance' => $request->max_distance,
+                        'longitude' => $request->longitude,
+                        'latitude' => $request->latitude,
                     ]);
                 }
 
                 $userType = Auth::user()->user_type_id;
 
-                if ($userType == 1) {
+                if ($userType == Constants::$professional) {
                     if ($professional = Professional::where('user_id', $user_id)->first()) {
                         $professional->update([
                             'profession_title' => $request->profession_title,
                             'years_of_experience' => $request->years_of_experience,
                             'wage' => $request->wage,
                             'status' => $request->status,
-                            'specialities' => json_encode($request->specialities),
-                            'longitude' => $request->longitude,
-                            'latitude' => $request->latitude,
+                            'specialities' => json_encode($request->specialities)
                         ]);
                     }
-                } elseif ($userType == 2) {
+                } elseif ($userType == Constants::$business) {
                     if ($business = Business::where('user_id', $user_id)->first()) {
                         $business->update([
                             'company_name' => $request->company_name,
-                            'max_distance' => $request->max_distance,
-                            'longitude' => $request->longitude,
-                            'latitude' => $request->latitude,
+                            'max_distance' => $request->max_distance, 
                         ]);
                     }
                 }
@@ -180,10 +179,7 @@ class UserController extends Controller
 
                 $path = 'images/' . $imageName;
                 $profile->profile_pic = $path;
-                $profile->save(); 
-                // if ($profile->update()) {
-                //     return 'iiiiii';
-                // }
+                $profile->save();  
 
                 $imageUrl = url('/images/' . basename($path));
 
@@ -197,9 +193,6 @@ class UserController extends Controller
         }
     }
 
-    
-
-
     public function deleteUserAccount() {
         $userId = Auth::id();
         $user = User::find($userId);
@@ -207,12 +200,12 @@ class UserController extends Controller
         if ($user) {
     
             switch (Auth::user()->user_type_id) {
-                case 1:
+                case Constants::$professional:
                     $user->deleteProfessionalAccount();
                     return $this->success(['message' => "User account deleted successfully"], 200);
                     break;
     
-                case 2:
+                case Constants::$business:
                     $user->deleteBusinessAccount();
                     return $this->success(['message' => "User account deleted successfully"], 200);
                     break;

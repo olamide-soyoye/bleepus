@@ -18,8 +18,6 @@ return new class extends Migration
             // $table->integer('user_id')->nullable();
             $table->uuid('user_id')->nullable();
             $table->uuid('profile_id')->nullable();
-            $table->string('longitude')->nullable();
-            $table->string('latitude')->nullable();
             $table->string('max_distance')->nullable();
             $table->string('profession_title')->nullable();
             $table->string('skills')->nullable();
