@@ -165,24 +165,56 @@ class UserController extends Controller
         }
     }
 
-    public function updateProfilePicture(Request $request){
+    // public function updateProfilePicture(Request $request){
+    //     $user_id = Auth::id();
+
+    //     if ($profile = Profile::where('user_id', $user_id)->first()) {
+    //         $request->validate([
+    //             'profile_pic' => 'image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+    //         ]);
+
+    //         if ($request->hasFile('profile_pic')) {
+    //             // $path = $request->file('profile_pic')->store('public/images');
+    //             $path = $request->file('profile_pic')->store('public/images');
+                // $profile->profile_pic = $path;
+                // $profile->update();
+
+    //             // $imageUrl = Storage::url($path);
+    //             $imageUrl = url('/storage/images/' . basename($path));
+
+    //             return $this->success([
+    //                 'message' => 'Profile picture updated successfully',
+    //                 'image_url' => $imageUrl,
+    //             ], 200);
+    //         }
+
+    //         return $this->error('Error', 'Unable to update profile picture', 400);
+    //     }
+    // }
+    public function updateProfilePicture(Request $request) {
         $user_id = Auth::id();
 
-        if ($profile = Profile::where('user_id', $user_id)->first()) {
+        $profile = Profile::where('user_id', $user_id)->first();
+        if ($profile) {
             $request->validate([
                 'profile_pic' => 'image|mimes:jpeg,png,jpg,gif,svg|max:2048',
             ]);
 
             if ($request->hasFile('profile_pic')) {
-                $path = $request->file('profile_pic')->store('public/images');
-                
-                $profile->profile_pic = $path;
-                $profile->update();
+                $imageName = $request->file('profile_pic')->getClientOriginalName();
+                $request->file('profile_pic')->move(public_path('images'), $imageName);
 
-                $imageUrl = Storage::url($path);
+                $path = 'images/' . $imageName;
+                $profile->profile_pic = $path;
+                $profile->save(); 
+                // if ($profile->update()) {
+                //     return 'iiiiii';
+                // }
+
+                $imageUrl = url('/images/' . basename($path));
 
                 return $this->success([
-                    'message' => 'Profile picture updated successfully',
+                    'message' => "Profile picture updated successfully $profile->id",
                     'image_url' => $imageUrl,
                 ], 200);
             }
@@ -190,6 +222,8 @@ class UserController extends Controller
             return $this->error('Error', 'Unable to update profile picture', 400);
         }
     }
+
+    
 
 
     public function deleteUserAccount() {
