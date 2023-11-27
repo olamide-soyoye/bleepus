@@ -19,35 +19,119 @@ use Illuminate\Support\Facades\Storage;
 class UserController extends Controller
 {
     use HttpResponses;
-    public function getProfessionalsWithinRange(Request $request){
-        // $latitude = $request->latitude ?? null;
-        // $longitude = $request->longitude ?? null;
+    // public function getProfessionalsWithinRange(Request $request){
+    //     $distance = $request->distance;
+    //     $rating = $request->rating;
+    //     $experience = $request->experience;
+    //     $availability = $request->availability;
 
+    //     $loggedInUserId = Auth::id();
+    //     $business = Business::where('user_id', $loggedInUserId)->first();
+        
+    //     if (!$business) {
+    //         return $this->error('Error', 'Unable to find businesses', 400);
+    //     }
+
+    //     $maxDistance = $business->max_distance ? $business->max_distance : 2;
+
+    //     $latitude = $business->latitude;
+    //     $longitude = $business->longitude;
+
+    //     $professionalsAround = Professional::withinDistanceOf(
+    //         $latitude, 
+    //         $longitude, 
+    //         $maxDistance
+    //     )->with('user', 'profile')->get();
+
+    //     return $this->success([
+    //         'professionalsAround' => $professionalsAround->isEmpty() ? [] : $professionalsAround,
+    //     ], 200);
+    // }
+    public function getProfessionalsWithinRange(Request $request){ 
         $loggedInUserId = Auth::id();
-        $business = Business::where('user_id', $loggedInUserId)->first();
+        $business = Business::with("profile")->where('user_id', $loggedInUserId)->first();
         
         if (!$business) {
             return $this->error('Error', 'Unable to find businesses', 400);
         }
-
+        
         $maxDistance = $business->max_distance ? $business->max_distance : 2;
+        
+        $latitude = (float)$business['profile']->latitude;
+        $longitude = (float)$business['profile']->longitude;
+    
+        $query = Professional::join('profiles', 'professionals.profile_id', '=', 'profiles.id')
+        ->select('professionals.*', 'profiles.latitude', 'profiles.longitude')
+        ->whereRaw(
+            "ST_Distance_Sphere(point(profiles.longitude, profiles.latitude), 
+            point(?, ?)) <= ?", 
+            [$longitude, $latitude, $maxDistance]
+        )->with('user', 'profile');
+    
+        // Check if the request has a distance parameter
+        if ($request->has('distance')) {
+            $distance = $request->input('distance');
+            $query->whereRaw(
+                "ST_Distance_Sphere(point(profiles.longitude, profiles.latitude), 
+                point(?, ?)) <= ?", 
+                [$longitude, $latitude, $distance]
+            );
+        }
+    
+        // Check if the request has a rating parameter
+        if ($request->has('rating')) {
+            $rating = $request->input('rating');
+            $query->where('ratings', '>=', $rating);
+        }
+    
+        // Check if the request has an experience parameter
+        if ($request->has('experience')) {
+            $experience = $request->input('experience');
+            $query->where('years_of_experience', '>=', $experience);
+        }
 
-        // if (!$latitude || !$longitude) {
-            $latitude = $business->latitude;
-            $longitude = $business->longitude;
-        // }
-
-        $professionalsAround = Professional::withinDistanceOf(
-            $latitude, 
-            $longitude, 
-            $maxDistance
-        )->with('user', 'profile')->get();
-
+        // Check if the request has an availability parameter
+        if ($request->has('availability')) {
+            $availability = $request->input('availability');
+            $query->where('status', '=', $availability);
+        }
+    
+        $filteredProfessionals = $query->get();
+    
         return $this->success([
-            'professionalsAround' => $professionalsAround->isEmpty() ? [] : $professionalsAround,
+            'professionalsAround' => $filteredProfessionals->isEmpty() ? [] : $filteredProfessionals,
         ], 200);
     }
+    
 
+    // public function getHealthCareProvidersWithinRange(Request $request){
+    //     $latitude = $request->latitude ?? null;
+    //     $longitude = $request->longitude ?? null;
+
+    //     $loggedInUserId = Auth::id();
+    //     $professional = Professional::where('user_id', $loggedInUserId)->first();
+
+    //     if (!$professional) {
+    //         return $this->error('Error', 'Unable to find professional', 400);
+    //     }
+
+    //     $maxDistance = $professional->max_distance ? $professional->max_distance : 2;
+
+    //     if (!$latitude || !$longitude) {
+    //         $latitude = $professional->latitude;
+    //         $longitude = $professional->longitude;
+    //     }
+
+    //     $businessesAround = Business::withinDistanceOf(
+    //         $latitude, 
+    //         $longitude,
+    //         $maxDistance
+    //     )->with('user', 'profile')->get();
+
+    //     return $this->success([
+    //         'businessesAround' => $businessesAround->isEmpty() ? [] : $businessesAround,
+    //     ], 200);
+    // }
     public function getHealthCareProvidersWithinRange(Request $request){
         $latitude = $request->latitude ?? null;
         $longitude = $request->longitude ?? null;
@@ -62,19 +146,55 @@ class UserController extends Controller
         $maxDistance = $professional->max_distance ? $professional->max_distance : 2;
 
         if (!$latitude || !$longitude) {
-            $latitude = $professional->latitude;
-            $longitude = $professional->longitude;
+            $latitude = (float)$professional['profile']->latitude;
+            $longitude = (float)$professional['profile']->longitude; 
         }
 
-        $businessesAround = Business::withinDistanceOf(
-            $latitude, 
-            $longitude,
-            $maxDistance
-        )->with('user', 'profile')->get();
+        $query = Business::join('profiles', 'businesses.profile_id', '=', 'profiles.id')
+        ->select('businesses.*', 'profiles.latitude', 'profiles.longitude')
+        ->whereRaw(
+            "ST_Distance_Sphere(point(profiles.longitude, profiles.latitude), 
+            point(?, ?)) <= ?", 
+            [$longitude, $latitude, $maxDistance]
+        )->with('user', 'profile');
+    
+        // Check if the request has a distance parameter
+        if ($request->has('distance')) {
+            $distance = $request->input('distance');
+            $query->whereRaw(
+                "ST_Distance_Sphere(point(profiles.longitude, profiles.latitude), 
+                point(?, ?)) <= ?", 
+                [$longitude, $latitude, $distance]
+            );
+        }
+    
+        // Check if the request has a rating parameter
+        if ($request->has('rating')) {
+            $rating = $request->input('rating');
+            $query->where('ratings', '>=', $rating);
+        }
 
+        // Check if the request has an availability parameter
+        if ($request->has('availability')) {
+            $availability = $request->input('availability');
+            $query->where('status', '=', $availability);
+        }
+    
+        $businessesAround = $query->get();
+        // $businessesAround = $this->removeUnwantedKeys($businessesAround);
+        
         return $this->success([
             'businessesAround' => $businessesAround->isEmpty() ? [] : $businessesAround,
         ], 200);
+    }
+    
+    private function removeUnwantedKeys($businessesAround) {
+        $responseData['data']['businessesAround'] = collect($businessesAround)->map(function ($business) {
+            unset($business['profile']['total_earnings']);
+            unset($business['profile']['pending_payment']);
+            
+            return $business;
+        })->toArray();
     }
 
     public function getUserProfile(){
