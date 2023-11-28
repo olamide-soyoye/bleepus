@@ -55,28 +55,30 @@ class UserController extends Controller
             return $this->error('Error', 'Unable to find businesses', 400);
         }
         
-        $maxDistance = $business->max_distance ? $business->max_distance : 2;
+        $maxDistance = $business->max_distance ? $business->max_distance  : Constants::$defaultDistance;
         
         $latitude = (float)$business['profile']->latitude;
         $longitude = (float)$business['profile']->longitude;
-    
-        $query = Professional::join('profiles', 'professionals.profile_id', '=', 'profiles.id')
-        ->select('professionals.*', 'profiles.latitude', 'profiles.longitude')
-        ->whereRaw(
-            "ST_Distance_Sphere(point(profiles.longitude, profiles.latitude), 
-            point(?, ?)) <= ?", 
-            [$longitude, $latitude, $maxDistance]
-        )->with('user', 'profile');
-    
-        // Check if the request has a distance parameter
+
         if ($request->has('distance')) {
             $distance = $request->input('distance');
-            $query->whereRaw(
-                "ST_Distance_Sphere(point(profiles.longitude, profiles.latitude), 
-                point(?, ?)) <= ?", 
-                [$longitude, $latitude, $distance]
-            );
+            $rawQuery = "ST_Distance_Sphere(point(profiles.longitude, profiles.latitude),  point($longitude, $latitude))/". Constants::$mileConversion ."<= $distance";
+        }else{
+            $rawQuery = "ST_Distance_Sphere(point(profiles.longitude, profiles.latitude),  point($longitude, $latitude))/". Constants::$mileConversion ."<= $maxDistance";
         }
+
+        $query = Professional::join('profiles', 'professionals.profile_id', '=', 'profiles.id')
+        ->join('users', 'professionals.user_id', '=', 'users.id') 
+        ->select(
+            'professionals.*',
+            'profiles.latitude',
+            'profiles.longitude',
+            // DB::raw('ROUND(ST_Distance_Sphere(point(profiles.longitude, profiles.latitude), point(?, ?)) / '. Constants::$mileConversion .', 2)
+            DB::raw("ROUND((ST_Distance_Sphere(point(profiles.longitude, profiles.latitude), point($longitude, $latitude)) / ". Constants::$mileConversion ."),2) AS distance_between")
+        )
+        ->whereRaw($rawQuery)
+        ->where('users.user_type_id', Constants::$professional) 
+        ->with('user', 'profile');
     
         // Check if the request has a rating parameter
         if ($request->has('rating')) {
@@ -96,7 +98,7 @@ class UserController extends Controller
             $query->where('status', '=', $availability);
         }
     
-        $filteredProfessionals = $query->get();
+        $filteredProfessionals = $query->get(); 
     
         return $this->success([
             'professionalsAround' => $filteredProfessionals->isEmpty() ? [] : $filteredProfessionals,
@@ -142,31 +144,32 @@ class UserController extends Controller
         if (!$professional) {
             return $this->error('Error', 'Unable to find professional', 400);
         }
-
-        $maxDistance = $professional->max_distance ? $professional->max_distance : 2;
+        //there are 1609.34metere in one mile
+        $maxDistance = $professional->max_distance ? $professional->max_distance : Constants::$defaultDistance ;
 
         if (!$latitude || !$longitude) {
             $latitude = (float)$professional['profile']->latitude;
             $longitude = (float)$professional['profile']->longitude; 
         }
 
-        $query = Business::join('profiles', 'businesses.profile_id', '=', 'profiles.id')
-        ->select('businesses.*', 'profiles.latitude', 'profiles.longitude')
-        ->whereRaw(
-            "ST_Distance_Sphere(point(profiles.longitude, profiles.latitude), 
-            point(?, ?)) <= ?", 
-            [$longitude, $latitude, $maxDistance]
-        )->with('user', 'profile');
-    
-        // Check if the request has a distance parameter
         if ($request->has('distance')) {
             $distance = $request->input('distance');
-            $query->whereRaw(
-                "ST_Distance_Sphere(point(profiles.longitude, profiles.latitude), 
-                point(?, ?)) <= ?", 
-                [$longitude, $latitude, $distance]
-            );
+            $rawQuery = "ST_Distance_Sphere(point(profiles.longitude, profiles.latitude),  point($longitude, $latitude))/". Constants::$mileConversion ."<= $distance";
+        }else{
+            $rawQuery = "ST_Distance_Sphere(point(profiles.longitude, profiles.latitude),  point($longitude, $latitude))/". Constants::$mileConversion ."<= $maxDistance";
         }
+    
+        $query = Business::join('profiles', 'businesses.profile_id', 'profiles.id')
+        ->join('users', 'businesses.user_id', '=', 'users.id') 
+        ->select(
+            'businesses.*',
+            'profiles.latitude',
+            'profiles.longitude',
+            DB::raw("ROUND((ST_Distance_Sphere(point(profiles.longitude, profiles.latitude), point($longitude, $latitude)) / ". Constants::$mileConversion ."),2) AS distance_between")
+        )
+        ->whereRaw($rawQuery)
+        ->where('users.user_type_id', Constants::$business) 
+        ->with('user', 'profile');
     
         // Check if the request has a rating parameter
         if ($request->has('rating')) {
@@ -197,8 +200,8 @@ class UserController extends Controller
         })->toArray();
     }
 
-    public function getUserProfile(){
-        $loggedInUserId = Auth::id();
+    public function getUserProfile($userId = null){
+        $loggedInUserId = $userId ?? Auth::id();
         
         $profile = Profile::where("user_id",$loggedInUserId)
         ->with("business","professional","user")
