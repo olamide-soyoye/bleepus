@@ -207,10 +207,11 @@ class UserController extends Controller
         ->with("business","professional","user")
         ->first();
 
-        if (Auth::user()->user_type_id == Constants::$business) {
+
+        if ($profile["user"]["user_type_id"] == Constants::$business) {
             unset($profile['professional']);
         }
-        if (Auth::user()->user_type_id == Constants::$professional) {
+        if ($profile["user"]["user_type_id"] == Constants::$professional) {
             unset($profile['business']);
         }
 

@@ -23,7 +23,7 @@ class Professional extends Model
         'wage',
         'status',
         'ratings',
-        'specialities', // Assuming 'specialities' is the attribute you want to handle
+        'specialities',
     ];
 
     public function user()
@@ -38,6 +38,6 @@ class Professional extends Model
 
     public function getSpecialitiesAttribute($value)
     {
-        return $value ?? [];
+        return json_decode($value, true) ?? [];
     }
 }
