@@ -20,7 +20,7 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
 
-Route::middleware(['auth:sanctum', 'throttle:5,1'])->group(function () {
+Route::middleware(['auth:sanctum', 'throttle:10,1'])->group(function () {
     //logout
     Route::post('auth/logout', [ Api\AuthController::class, 'logout'])->name('api.auth.logout');
 
@@ -33,11 +33,11 @@ Route::middleware(['auth:sanctum', 'throttle:5,1'])->group(function () {
     });
     
     Route::get('professionals/around', [Api\UserController::class, 'getProfessionalsWithinRange'])
-    ->middleware('throttle:5,1')->name('api.professionals.around');
+    ->middleware('throttle:10,1')->name('api.professionals.around');
 
 
     Route::get('businesses/around', [Api\UserController::class, 'getHealthCareProvidersWithinRange'])
-    ->middleware('throttle:5,1')->name('api.businesses.around');
+    ->middleware('throttle:10,1')->name('api.businesses.around');
 });
 
 Route::get('user/types', [ Api\UserController::class, 'userTypes' ])->middleware('throttle:5,1')->name('api.user.types');
