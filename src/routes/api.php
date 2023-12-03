@@ -3,7 +3,7 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api;
-
+use App\Http\Controllers\JobListingController;
 
 /*
 |--------------------------------------------------------------------------
@@ -30,6 +30,11 @@ Route::middleware(['auth:sanctum', 'throttle:10,1'])->group(function () {
         Route::put('profile', [Api\UserController::class, 'updateUserProfile'])->name('api.update.user.profile');
         Route::post('profile/picture', [Api\UserController::class, 'updateProfilePicture']);
         Route::delete('account', [Api\UserController::class, 'deleteUserAccount'])->name('api.delete.user.profile');
+    });
+
+    Route::prefix('job')->middleware('throttle:5,1')->group(function () {
+        Route::post('create', [JobListingController::class, 'createJobOffer'])->name('api.create.job');
+        
     });
     
     Route::get('professionals/around', [Api\UserController::class, 'getProfessionalsWithinRange'])
