@@ -302,10 +302,10 @@ class UserController extends Controller
                 $request->file('profile_pic')->move(public_path('images'), $imageName);
 
                 $path = 'images/' . $imageName;
-                $profile->profile_pic = $path;
+                $imageUrl = url('/images/' . basename($path));
+                $profile->profile_pic = $imageUrl;
                 $profile->save();  
 
-                $imageUrl = url('/images/' . basename($path));
 
                 return $this->success([
                     'message' => "Profile picture updated successfully $profile->id",
