@@ -16,6 +16,7 @@ class JobListingController extends Controller
             'job_description' => 'required|string',
             'wage' => 'required|numeric',
         ]);
+        
 
         $JobListing = JobListing::create([
             'title' => $validatedData['job_title'],
