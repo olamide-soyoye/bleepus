@@ -3,7 +3,9 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api;
+use App\Http\Controllers\JobApplicantController;
 use App\Http\Controllers\JobListingController;
+use App\Http\Controllers\NotificationController;
 
 /*
 |--------------------------------------------------------------------------
@@ -20,7 +22,7 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
 
-Route::middleware(['auth:sanctum', 'throttle:10,1'])->group(function () {
+Route::middleware(['auth:sanctum', 'throttle:20,1'])->group(function () {
     //logout
     Route::post('auth/logout', [ Api\AuthController::class, 'logout'])->name('api.auth.logout');
 
@@ -32,8 +34,19 @@ Route::middleware(['auth:sanctum', 'throttle:10,1'])->group(function () {
         Route::delete('account', [Api\UserController::class, 'deleteUserAccount'])->name('api.delete.user.profile');
     });
 
-    Route::prefix('job')->middleware('throttle:5,1')->group(function () {
-        Route::post('create', [JobListingController::class, 'createJobOffer'])->name('api.create.job');
+    Route::prefix('job')->middleware('throttle:10,1')->group(function () {
+        Route::post('create', [JobListingController::class, 'createJobOffer'])->name('api.job.create');
+        Route::post('apply', [JobApplicantController::class, 'applyForJobs'])->name('api.job.apply');
+        Route::get('self/retrieve', [JobListingController::class, 'getPostedJobs'])->name('api.job.self.retrieve');
+        Route::get('around', [JobListingController::class, 'getJobsWithinProffessionalRange'])->name('api.jobs.around');
+        Route::get('appliedto', [JobApplicantController::class, 'getAllJobsAppliedFor'])->name('api.jobs.appliedto');
+        Route::get('applicants', [JobApplicantController::class, 'getApplicants'])->name('api.jobs.applicants');
+        Route::post('hireorreject/professional', [JobApplicantController::class, 'hireOrRejectProfessionals'])->name('api.hireorreject.job.applicant'); 
+    });
+
+    Route::prefix('notifications')->middleware('throttle:20,1')->group(function () {
+        Route::get('get', [NotificationController::class, 'getAllNotifications'])->name('api.notifications.get');
+        Route::get('show/{notificationId?}', [NotificationController::class, 'showSingleNotification'])->name('api.notifications.show');
         
     });
     

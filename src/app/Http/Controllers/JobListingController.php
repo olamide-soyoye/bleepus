@@ -2,33 +2,147 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Business;
+use App\Models\JobApplicant;
 use App\Models\JobListing;
+use App\Models\Notification;
+use App\Models\Professional;
+use App\Models\Profile;
 use Illuminate\Http\Request;
 use App\Traits\HttpResponses;
-
+use Constants;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
+use Carbon\Carbon;
 class JobListingController extends Controller
 {
     use HttpResponses;
 
     public function createJobOffer(Request $request){
-        $validatedData = $request->validate([
-            'job_title' => 'required|string|max:255',
-            'job_description' => 'required|string',
-            'wage' => 'required|numeric',
-        ]);
+        $user_id = Auth::id();
+        if (Auth::user()->user_type_id == Constants::$business) {
+            $business = Business::where('user_id', $user_id)->first();
+            
+            try {
+                $validatedData = $request->validate([
+                    'job_title' => 'required|string|max:255',
+                    'job_description' => 'required|string|max:255',
+                    'urgency' => 'required|string',
+                    'wage' => 'required|numeric',
+                ]);
+            } catch (ValidationException $e) {
+                return $this->error('Validation Error', $e->getMessage(), 422);
+            }
+            
+    
+            $JobListing = JobListing::create([
+                'job_title' => $validatedData['job_title'],
+                'job_description' => $validatedData['job_description'],
+                'wage' => $validatedData['wage'],
+                "business_id" => $business->id,
+                "urgency" => $request->urgency,
+                "start_date" => $request->start_date,
+                "end_date" => $request->end_date,
+                "qualifications" => json_encode($request->qualifications),
+                "tasks" => json_encode($request->tasks)
+            ]);
+    
+            if ($JobListing) {
+                return $this->success([
+                    'data' => $JobListing,
+                ], 200);
+            }
+            return $this->error('Error', 'Could not post job', 400);
+        }
+        return $this->error('Error', 'Only Healthcare Providers are allowed to post jobs', 400);
+    } 
+
+    public function getPostedJobs(Request $request){
+        $user_id = Auth::id();
+        if (Auth::user()->user_type_id == Constants::$business) {
+            $business = Business::where('user_id', $user_id)->first();
+            $JobListing = JobListing::where('business_id', $business->id)->get();
+    
+            if ($JobListing) {
+                return $this->success([
+                    'data' => $JobListing,
+                ], 200);
+            }
+            return $this->error('Error', 'Could not get jobs you posted', 400);
+        }
+        return $this->error('Error', 'Only Healthcare Providers are allowed to view jobs posted by them', 400);
+    }
+
+    public function getJobsWithinProffessionalRange(Request $request){
+        if (Auth::user()->user_type_id == Constants::$professional) {
+            $latitude = $request->latitude ?? null;
+            $longitude = $request->longitude ?? null;
+
+            $loggedInUserId = Auth::id();
+            $professional = Professional::where('user_id', $loggedInUserId)->first();
+
+            if (!$professional) {
+                return $this->error('Error', 'Unable to find professional', 400);
+            }
+
+            $maxDistance = $professional->max_distance ? $professional->max_distance : Constants::$defaultDistance ;
+
+            if (!$latitude || !$longitude) {
+                $latitude = (float)$professional['profile']->latitude;
+                $longitude = (float)$professional['profile']->longitude; 
+            }
+
+            if ($request->has('distance')) {
+                $distance = $request->input('distance');
+                $rawQuery = "ST_Distance_Sphere(point(profiles.longitude, profiles.latitude),  point($longitude, $latitude))/". Constants::$mileConversion ."<= $distance";
+            }else{
+                $rawQuery = "ST_Distance_Sphere(point(profiles.longitude, profiles.latitude),  point($longitude, $latitude))/". Constants::$mileConversion ."<= $maxDistance";
+            }
         
+            $query = JobListing::join("businesses","job_listings.business_id","businesses.id")
+            ->join('profiles', 'businesses.profile_id', 'profiles.id')
+            ->join('users', 'businesses.user_id', '=', 'users.id') 
+            ->select(
+                'businesses.company_name',
+                'businesses.max_distance',
+                'businesses.ratings',
+                'job_listings.*',
+                'profiles.latitude',
+                'profiles.longitude',
+                'profiles.profile_pic',
+                'profiles.phone_no',
+                'profiles.country_abbr',
+                'profiles.country_code',
+                'profiles.address',
+                'profiles.agency_code',
+                'profiles.agency_code',
+                DB::raw("ROUND((ST_Distance_Sphere(point(profiles.longitude, profiles.latitude), point($longitude, $latitude)) / ". Constants::$mileConversion ."),2) AS distance_between")
+            )
+            ->whereRaw($rawQuery)
+            ->where('users.user_type_id', Constants::$business);
+            // ->with('profile');
+        
+            // Check if the request has a rating parameter
+            if ($request->has('rating')) {
+                $rating = $request->input('rating');
+                $query->where('ratings', '>=', $rating);
+            }
 
-        $JobListing = JobListing::create([
-            'title' => $validatedData['job_title'],
-            'description' => $validatedData['job_description'],
-            'wage' => $validatedData['wage'],
-        ]);
-
-        if ($JobListing) {
+            // Check if the request has an availability parameter
+            if ($request->has('availability')) {
+                $availability = $request->input('availability');
+                $query->where('status', '=', $availability);
+            }
+        
+            $jobsAround = $query->get();
+            // $jobsAround = $this->removeUnwantedKeys($jobsAround);
+            
             return $this->success([
-                'data' => $JobListing,
+                'JobsAround' => $jobsAround->isEmpty() ? [] : $jobsAround,
             ], 200);
         }
-        return $this->error('Error', 'Could not post job', 400);
-    } 
+        return $this->error('Error', 'Only Healthcare Professionals are allowed to view jobs around them them', 400);
+    }
+
 }

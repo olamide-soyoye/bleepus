@@ -28,4 +28,9 @@ class Business extends Model
     {
         return $this->hasOne(Profile::class, 'id', 'profile_id');
     }
+
+    // public function profile()
+    // {
+    //     return $this->belongsTo(Profile::class, 'profile_id');
+    // }
 }

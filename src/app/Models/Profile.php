@@ -38,4 +38,15 @@ class Profile extends Model
     {
         return $this->belongsTo(User::class, 'user_id', 'id');
     }
+    public function jobListings()
+    {
+        return $this->hasManyThrough(
+            JobListing::class,
+            Business::class,
+            'profile_id', // Foreign key on businesses table
+            'business_id', // Foreign key on job_listings table
+            'id', // Local key on profiles table
+            'id' // Local key on businesses table
+        );
+    }
 }
