@@ -42,4 +42,9 @@ class JobListing extends Model
     {
         return $this->business->profile();
     }
+
+    public function tasks()
+    {
+        return $this->hasMany(Task::class, 'job_listing_id');
+    }
 }

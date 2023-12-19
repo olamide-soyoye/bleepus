@@ -78,6 +78,7 @@ class UserController extends Controller
         )
         ->whereRaw($rawQuery)
         ->where('users.user_type_id', Constants::$professional) 
+        ->where('professionals.status', Constants::$availableProfessional) 
         ->with('user', 'profile');
     
         // Check if the request has a rating parameter

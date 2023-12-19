@@ -13,7 +13,8 @@ class Notification extends Model
         'body',
         'subject',
         'business_id',
-        'professional_id'
+        'professional_id',
+        'job_id'
     ];
 
     // public function getBodyAttribute($value)

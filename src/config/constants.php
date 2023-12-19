@@ -6,4 +6,5 @@ class Constants
   public static $business = 2;
   public static $mileConversion = 1609.34;
   public static $defaultDistance = 2;
+  public static $availableProfessional = "Available";
 }

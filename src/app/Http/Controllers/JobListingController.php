@@ -8,6 +8,7 @@ use App\Models\JobListing;
 use App\Models\Notification;
 use App\Models\Professional;
 use App\Models\Profile;
+use App\Models\Task;
 use Illuminate\Http\Request;
 use App\Traits\HttpResponses;
 use Constants;
@@ -34,6 +35,10 @@ class JobListingController extends Controller
             } catch (ValidationException $e) {
                 return $this->error('Validation Error', $e->getMessage(), 422);
             }
+
+            if (!$request->tasks || $request->tasks === '' || $request->tasks === null) {
+                return $this->error('Error', 'Please add tasks for the job', 400);
+            }
             
     
             $JobListing = JobListing::create([
@@ -45,8 +50,19 @@ class JobListingController extends Controller
                 "start_date" => $request->start_date,
                 "end_date" => $request->end_date,
                 "qualifications" => json_encode($request->qualifications),
-                "tasks" => json_encode($request->tasks)
             ]);
+            // "tasks" => json_encode($request->tasks)
+            $JobListingId = $JobListing->id;
+            foreach ($request->tasks as $taskData) {
+                $task = Task::create([
+                    'job_listing_id' => $JobListingId, 
+                    'isCompleted' => false,
+                    'title' => $taskData,
+                ]);
+                if (!$task) {
+                    return $this->error('Error', "Unable to add $taskData", 400);
+                }
+            }
     
             if ($JobListing) {
                 return $this->success([
@@ -62,7 +78,9 @@ class JobListingController extends Controller
         $user_id = Auth::id();
         if (Auth::user()->user_type_id == Constants::$business) {
             $business = Business::where('user_id', $user_id)->first();
-            $JobListing = JobListing::where('business_id', $business->id)->get();
+            $JobListing = JobListing::with("tasks")->where('business_id', $business->id)->get();
+
+            // $tasks = Task::;
     
             if ($JobListing) {
                 return $this->success([
@@ -143,6 +161,11 @@ class JobListingController extends Controller
             ], 200);
         }
         return $this->error('Error', 'Only Healthcare Professionals are allowed to view jobs around them them', 400);
+    }
+
+    public function getJobsById (Request $request){
+        return JobListing::with("business","business.profile")
+        ->where('id',$request->jobId)->first();
     }
 
 }

@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\JobApplicant;
+use App\Models\JobListing;
 use App\Models\Notification;
+use App\Models\Professional;
 use App\Models\Profile;
 use Carbon\Carbon;
 use Constants;
@@ -64,27 +66,28 @@ class JobApplicantController extends Controller
         ];
 
         $jobDetails = JobApplicant::with('jobListing', 'professional.user', 'jobListing.business.profile')->where($conditions)->get();
-
+        
         if ($jobDetails->isEmpty()) {
             return $this->error('Error', 'Job details not found', 404);
         }
 
         $businessName = $jobDetails[0]['jobListing']['business']['company_name'] ?? null;
         $businessId = $jobDetails[0]['jobListing']['business']['id'];
-        $jobTitle = $jobDetails[0]['jobListing']["job_title"] ?? null;
+        $jobTitle = $jobDetails[0]['jobListing']["job_title"] ?? null; 
         $applicantName = $jobDetails[0]['professional']['user']['fname'] ?? null . ' ' . $jobDetails[0]['professional']['user']['lname'] ?? null;
         $jobPostingDate = Carbon::parse($jobDetails[0]['created_at'])->format('M jS, Y');
 
         $subject = "Hello $businessName, I am interested in your shift offer! ";
         $body = "
             Hello $businessName, I am interested in the $jobTitle shift you posted on $jobPostingDate. 
-            <br> Thanks. <br><br>$applicantName
+           \n Thanks. \n $applicantName
         ";
 
         $notify = Notification::create([
             'business_id' => $businessId,
             'subject' => $subject,
-            'body' => $body
+            'body' => $body,
+            'job_id' => $validatedData["jobId"]
         ]);
 
         if (!$notify) {
@@ -103,11 +106,12 @@ class JobApplicantController extends Controller
             $professionalId = $professional["professional"]["id"];
 
             $jobsAppliedFor = JobApplicant::join("job_listings", "job_applicants.job_listing_id","job_listings.id")
-            ->join("businesses","job_listings.business_id","businesses.id")
-            ->join("profiles","businesses.profile_id","profiles.id")
-            ->select("profiles.profile_pic","businesses.company_name","job_listings.*")
-            ->where("professional_id", $professionalId)->get();
-
+            ->leftjoin("businesses","job_listings.business_id","businesses.id")
+            ->leftJoin("profiles","businesses.profile_id","profiles.id")
+            ->select("profiles.profile_pic","businesses.company_name","job_listings.*","profiles.address as jobAddress")
+            ->where("professional_id", $professionalId)
+            ->get();
+            
             if ($jobsAppliedFor) {
                 return $this->success([
                     'JobsAppliedFor' => $jobsAppliedFor->isEmpty() ? [] : $jobsAppliedFor,
@@ -158,7 +162,7 @@ class JobApplicantController extends Controller
                 'job_listings.payment_status',
 
                 "profiles.phone_no","profiles.total_earnings","profiles.longitude", "profiles.latitude",
-                "profiles.about","users.fname","users.lname")
+                "profiles.about","users.fname","users.lname", "users.id as UserId")
                 ->where("job_listings.business_id", $businessId)
                 ->orderBy('job_listings.job_title')
                 ->orderBy('job_listings.id')
@@ -189,8 +193,13 @@ class JobApplicantController extends Controller
             
             $hireOrReject = $this->updateJobApplicantStatus($conditions, $decision);
 
+            if ($decision === "Hired") {
+                Professional::where('id',$professionalId)->update(['status'=>'Occupied']);
+            }
+
             if ($hireOrReject) {
                 $jobDetails = $this->getJobDetails($conditions);
+
                 $notification = $this->createNotification($professionalId, $decision, $jobDetails);
 
                 if ($notification) {
@@ -217,8 +226,10 @@ class JobApplicantController extends Controller
             return null;
         }
 
+
         $applicantName = $this->getApplicantName($jobDetails);
         $jobTitle = $jobDetails['jobListing']["job_title"] ?? null;
+        $jobId = $jobDetails['jobListing']["id"] ?? null;
         $applicationDate = Carbon::parse($jobDetails['created_at'])->format('M jS, Y');
         $businessPhoneNumber = $jobDetails['jobListing']['business']['profile']['phone_no'] ?? null;
         $businessName = $jobDetails['jobListing']['business']['company_name'] ?? null;
@@ -230,6 +241,7 @@ class JobApplicantController extends Controller
             'professional_id' => $professionalId,
             'subject' => $subject,
             'body' => $body,
+            'job_id' => $jobId,
         ]);
     }
 
@@ -240,14 +252,18 @@ class JobApplicantController extends Controller
     private function getBodyText($decision, $applicantName, $jobTitle, $applicationDate, $businessPhoneNumber, $businessName){
         switch ($decision) {
             case 'Hired':
-                return "Hello $applicantName; <br>
+                return "Hello $applicantName;
+
                         We are pleased to inform you that you have been hired for the $jobTitle shift that you applied for
-                        on $applicationDate. Please call $businessPhoneNumber for detailed information. <br><br><br>
+                        on $applicationDate. Please call $businessPhoneNumber for detailed information.
+
                         $businessName";
             case 'Rejected':
-                return "Hello $applicantName; <br>
+                return "Hello $applicantName; 
+                
                         We are sorry to inform you that you were not hired for the $jobTitle shift that you applied for
-                        on $applicationDate. We hope to have you with us on some other opportunities. <br><br><br>
+                        on $applicationDate. We hope to have you with us on some other opportunities. 
+
                         $businessName";
             default:
                 return '';
@@ -289,8 +305,46 @@ class JobApplicantController extends Controller
             'users' => [
                 'fname' => $jobApplicants[0]->fname,
                 'lname' => $jobApplicants[0]->lname,
+                'id' => $jobApplicants[0]->UserId
             ],
         ];
         return $data;
+    }
+
+    public function getAllJobsHiredFor(){
+        $user_id = Auth::id();
+        if (Auth::user()->user_type_id == Constants::$professional) {
+            $professional = Profile::with("user","professional")->where('user_id', $user_id)->first();
+            $professionalId = $professional["professional"]["id"];
+            $jobsHiredFor = JobApplicant::with("jobListing","jobListing.tasks","jobListing.business","jobListing.business.profile")
+            ->where('professional_id', $professionalId)
+            ->where('status', "Hired")
+            ->get();
+            // return $jobsHiredFor; 
+            $pendingCount = JobApplicant::where('professional_id', $professionalId)->where('status', 'Pending')->count();
+
+            $totalCount = JobApplicant::where('professional_id', $professionalId)->count();
+
+            $hiredCount = JobApplicant::where('professional_id', $professionalId)->where('status', 'Hired')->count();
+
+
+            // Prepare the response
+            $response = [
+                'pending' => $pendingCount,
+                'total' => $totalCount,
+                'hired' => $hiredCount,
+            ];
+            
+            if ($jobsHiredFor) {
+                $data = [
+                    "analytics" => $response,
+                    "jobsHiredFor"=>$jobsHiredFor->isEmpty() ? [] : $jobsHiredFor
+                ];
+                return $this->success([
+                    $data,
+                ], 200); 
+            }
+        } 
+        return $this->error('Error', 'Only Healthcare Professionals can view jobs hired for', 400);
     }
 }
