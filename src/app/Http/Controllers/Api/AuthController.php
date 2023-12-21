@@ -13,6 +13,7 @@ use App\Enums\TokenAbility;
 use App\Models\Business;
 use App\Models\Professional;
 use App\Http\Requests\RegisterRequest;
+use App\Models\Notification;
 use App\Models\Profile;
 use App\Traits\HttpResponses;
 use Constants;
@@ -215,9 +216,32 @@ class AuthController extends Controller
             unset($user['business']);
         }
         if ($user) {
+            // return $user['business']['id'];
+            if ($user->user_type_id == Constants::$business){
+                try {
+                    $unreadNotification = Notification::where('business_id', $user['business']['id'])
+                        ->where('read', false)
+                        ->count();
+                } catch (\Exception $e) {
+                    $unreadNotification = 0;
+                }
+            }
+            if ($user->user_type_id == Constants::$professional) {
+                
+                 try {
+                    $unreadNotification = Notification::where('professional_id',$user['professional']['id'])
+                    ->where('read',false)
+                    ->whereNull('business_id')
+                    ->count();
+                } catch (\Exception $e) {
+                    $unreadNotification = 0;
+                }
+            }
+
             return response()->json(
                 [
                     'user' => $user, 
+                    'unreadMessages'=>$unreadNotification,
                     'access_token' => $user->createToken("API TOKEN")->plainTextToken,
                     'message' => 'Logged In Successfully'
                 ]

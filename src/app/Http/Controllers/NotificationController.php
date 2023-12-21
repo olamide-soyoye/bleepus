@@ -23,16 +23,27 @@ class NotificationController extends Controller
             if ($userLoggedIn === null) {
                 return $this->error('Error', 'User type not recognized', 400);
             }
-            $notifications = Notification::where('business_id', $userLoggedIn)
-            ->select()->get();
+            //set Notification as Read
+            $updateToRead = Notification::where('business_id', $userLoggedIn)->update(['read'=> true]);
+            if ($updateToRead) {
+                $notifications = Notification::with('professional')->where('business_id', $userLoggedIn)
+                ->get();
+            }
         }else{
             $userLoggedIn = Professional::where('user_id', $userId)->first()->id;
             if ($userLoggedIn === null) {
                 return $this->error('Error', 'User type not recognized', 400);
             }
-            $notifications = Notification::where('professional_id', $userLoggedIn)
-            ->select('id','professional_id','subject','body','read','job_id','created_at','updated_at')
-            ->get();
+            $updateToRead = Notification::where('professional_id', $userLoggedIn)
+            ->whereNull('business_id')
+            ->update(['read'=> true]);
+            if ($updateToRead) {
+                $notifications = Notification::where('professional_id', $userLoggedIn)
+                ->whereNull('business_id')
+                ->select('id','professional_id','subject','body','read','job_id','created_at','updated_at')
+                ->get();
+            }
+            
         }
 
         return $this->success([

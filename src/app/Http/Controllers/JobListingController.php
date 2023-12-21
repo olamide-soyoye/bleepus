@@ -165,13 +165,13 @@ class JobListingController extends Controller
 
     public function getJobsById(Request $request){
         try {
-            $job = JobListing::with("business", "business.profile")
+            $job = JobListing::with("business", "business.profile","tasks")
                 ->findOrFail($request->jobId);
 
             return $this->success([
                 'job' => $job,
             ], 200);
-            
+
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             return $this->error('Error','Job not found', 400);
         }

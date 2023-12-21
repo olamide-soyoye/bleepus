@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Business;
+use App\Models\Notification;
 use App\Models\Professional;
 use App\Models\Profile;
 use App\Models\User;
@@ -208,6 +209,8 @@ class UserController extends Controller
         ->with("business","professional","user")
         ->first();
 
+        // return  $profile;
+
 
         if ($profile["user"]["user_type_id"] == Constants::$business) {
             unset($profile['professional']);
@@ -219,9 +222,30 @@ class UserController extends Controller
         if (!$profile) {
             return $this->error('Error', 'Unable to find profile', 400);
         }
+        if (Auth::user()->user_type_id == Constants::$business){
+            try {
+                $unreadNotification = Notification::where('business_id', $profile['business']['id'])
+                    ->where('read', false)
+                    ->count();
+            } catch (\Exception $e) {
+                $unreadNotification = 0;
+            }
+        }
+        if (Auth::user()->user_type_id == Constants::$professional) {
+            
+             try {
+                $unreadNotification = Notification::where('professional_id',$profile['professional']['id'])
+                ->where('read',false)
+                ->whereNull('business_id')
+                ->count();
+            } catch (\Exception $e) {
+                $unreadNotification = 0;
+            }
+        }
 
         return $this->success([
             'profile' => $profile ==null ? [] : $profile,
+            'unreadMessages'=>$unreadNotification,
         ], 200);
     }
 
