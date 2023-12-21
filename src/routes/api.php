@@ -37,6 +37,9 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::delete('account', [Api\UserController::class, 'deleteUserAccount'])->name('api.delete.user.profile');
     });
 
+    // Route::post('/public-transfer', [WalletController::class, 'transfer2'])
+    //     ->middleware(['verify_status', 'merchant_eligibility', 'throttle:api_transfer_rate_limit']);
+
     Route::prefix('job')->group(function () {
         Route::post('create', [JobListingController::class, 'createJobOffer'])->name('api.job.create');
         Route::post('apply', [JobApplicantController::class, 'applyForJobs'])->name('api.job.apply');
@@ -58,7 +61,6 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::get('get', [NotificationController::class, 'getAllNotifications'])->name('api.notifications.get');
         Route::get('show/{notificationId?}', [NotificationController::class, 'showSingleNotification'])->name('api.notifications.show');
         Route::get('read/{notificationId?}', [NotificationController::class, 'readNotification'])->name('api.notifications.read');
-        
     });
     
     Route::get('professionals/around', [Api\UserController::class, 'getProfessionalsWithinRange'])

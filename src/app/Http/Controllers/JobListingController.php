@@ -163,9 +163,18 @@ class JobListingController extends Controller
         return $this->error('Error', 'Only Healthcare Professionals are allowed to view jobs around them them', 400);
     }
 
-    public function getJobsById (Request $request){
-        return JobListing::with("business","business.profile")
-        ->where('id',$request->jobId)->first();
+    public function getJobsById(Request $request){
+        try {
+            $job = JobListing::with("business", "business.profile")
+                ->findOrFail($request->jobId);
+
+            return $this->success([
+                'job' => $job,
+            ], 200);
+            
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return $this->error('Error','Job not found', 400);
+        }
     }
 
 }

@@ -85,6 +85,7 @@ class JobApplicantController extends Controller
 
         $notify = Notification::create([
             'business_id' => $businessId,
+            'professional_id' => $professionalId,
             'subject' => $subject,
             'body' => $body,
             'job_id' => $validatedData["jobId"]
@@ -134,7 +135,7 @@ class JobApplicantController extends Controller
             ->join("professionals","job_applicants.professional_id","professionals.id")
             ->join("users","professionals.user_id","users.id")
             ->select(
-                'professionals.id',
+                'professionals.id as proffessionalId',
                 'professionals.user_id',
                 'professionals.profile_id',
                 'professionals.max_distance',
@@ -146,7 +147,7 @@ class JobApplicantController extends Controller
                 'professionals.ratings',
                 'professionals.specialities',
 
-                'job_listings.id',
+                'job_listings.id as jobId',
                 'job_listings.job_title',
                 'job_listings.job_description',
                 'job_listings.wage',
@@ -161,7 +162,7 @@ class JobApplicantController extends Controller
                 'job_listings.tasks',
                 'job_listings.payment_status',
 
-                "profiles.phone_no","profiles.total_earnings","profiles.longitude", "profiles.latitude",
+                "profiles.phone_no","profiles.total_earnings","profiles.longitude", "profiles.latitude","profiles.id as profileId",
                 "profiles.about","users.fname","users.lname", "users.id as UserId")
                 ->where("job_listings.business_id", $businessId)
                 ->orderBy('job_listings.job_title')
@@ -273,6 +274,7 @@ class JobApplicantController extends Controller
     private function formatGetApplicantsList($jobApplicants) {
         $data = [
             'job_listings' => [
+                'id' => $jobApplicants[0]->jobId,
                 'job_title' => $jobApplicants[0]->job_title,
                 'job_description' => $jobApplicants[0]->job_description,
                 'wage' => $jobApplicants[0]->wage,
@@ -286,6 +288,7 @@ class JobApplicantController extends Controller
                 'payment_status' => $jobApplicants[0]->payment_status,
             ],
             'professionals' => [
+                'id' => $jobApplicants[0]->proffessionalId,
                 'max_distance' => $jobApplicants[0]->max_distance,
                 'total_earnings' => $jobApplicants[0]->total_earnings,
                 'skills' => $jobApplicants[0]->skills,
@@ -296,6 +299,7 @@ class JobApplicantController extends Controller
                 'specialities' => $jobApplicants[0]->specialities,
             ],
             'profiles' => [
+                'id' => $jobApplicants[0]->profileId,
                 'phone_no' => $jobApplicants[0]->phone_no,
                 'total_earnings' => $jobApplicants[0]->total_earnings,
                 'longitude' => $jobApplicants[0]->longitude,
@@ -303,9 +307,9 @@ class JobApplicantController extends Controller
                 'about' => $jobApplicants[0]->about,
             ],
             'users' => [
+                'id' => $jobApplicants[0]->UserId,
                 'fname' => $jobApplicants[0]->fname,
-                'lname' => $jobApplicants[0]->lname,
-                'id' => $jobApplicants[0]->UserId
+                'lname' => $jobApplicants[0]->lname
             ],
         ];
         return $data;

@@ -57,7 +57,29 @@ class RouteServiceProvider extends ServiceProvider
     protected function configureRateLimiting()
     {
         RateLimiter::for('api', function (Request $request) {
-            return Limit::perMinute(6)->by($request->user()?->id ?: $request->ip());
+            return Limit::perMinute(60)->by($request->user()?->id ?: $request->ip());
         });
     }
+    // protected function configureRateLimiting()
+    // {
+    //     RateLimiter::for('api', function (Request $request) {
+    //         return Limit::perMinute(60)->by(optional($request->user())->id ?: $request->ip());
+    //     });
+
+    //     RateLimiter::for('login_rate_limit', function (Request $request) {
+    //         return Limit::perMinute(1)->by(optional($request->user())->id ?: $request->ip());
+    //     });
+
+    //     RateLimiter::for('sms_rate_limit', function (Request $request) {
+    //         return Limit::perMinutes(3, 1)->by(optional($request->user())->id ?: $request->ip());
+    //     });
+
+    //     RateLimiter::for('transfer_rate_limit', function (Request $request) {
+    //         return Limit::perMinutes(0.2, 1)->by(optional($request->user())->id ?: $request->ip() . 'transfer');
+    //     });
+
+    //     RateLimiter::for('api_transfer_rate_limit', function (Request $request) {
+    //         return Limit::perMinute(30)->by($request->private_key ?: $request->ip() . 'transfer');
+    //     });
+    // }
 }

@@ -24,8 +24,7 @@ class NotificationController extends Controller
                 return $this->error('Error', 'User type not recognized', 400);
             }
             $notifications = Notification::where('business_id', $userLoggedIn)
-            ->select('id','business_id','subject','body','read','job_id','created_at','updated_at')
-            ->get();
+            ->select()->get();
         }else{
             $userLoggedIn = Professional::where('user_id', $userId)->first()->id;
             if ($userLoggedIn === null) {
