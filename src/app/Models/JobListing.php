@@ -47,4 +47,6 @@ class JobListing extends Model
     {
         return $this->hasMany(Task::class, 'job_listing_id');
     }
+
+    
 }

@@ -18,5 +18,13 @@ class Task extends Model
     {
         return $this->belongsTo(JobListing::class);
     }
+    protected $casts = [
+        'isCompleted' => 'boolean',
+    ];
+
+    // public function getIsCompletedAttribute($value)
+    // {
+    //     return $value == 1 ? true : false;
+    // }
     
 }

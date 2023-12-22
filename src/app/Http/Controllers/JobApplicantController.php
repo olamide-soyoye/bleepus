@@ -173,9 +173,10 @@ class JobApplicantController extends Controller
             
             if ($jobApplicants) {
                 $data = $jobApplicants->isEmpty() ? [] : $this->formatGetApplicantsList($jobApplicants);
-                return $this->success([
-                    $data,
-                ], 200);
+                return response()->json([
+                    'message'=>"Request was successful",
+                    'data'=>$data,
+                ], 200); 
             }
         } 
         return $this->error('Error', 'Only Healthcare Providers can view jobs applicants', 400);
