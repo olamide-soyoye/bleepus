@@ -49,12 +49,13 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::get('appliedto', [JobApplicantController::class, 'getAllJobsAppliedFor'])->name('api.jobs.appliedto');
         Route::get('hired', [JobApplicantController::class, 'getAllJobsHiredFor'])->name('api.job.hired');
         Route::get('applicants', [JobApplicantController::class, 'getApplicants'])->name('api.jobs.applicants');
-        Route::post('by/id', [JobListingController::class, 'getJobsById'])->name('api.jobs.by.id');
+        Route::get('by/id', [JobListingController::class, 'getJobsById'])->name('api.jobs.by.id');
         Route::post('hireorreject/professional', [JobApplicantController::class, 'hireOrRejectProfessionals'])->name('api.hireorreject.job.applicant'); 
     });
+    
     Route::get('working/professionals', [DashboardController::class, 'getProfessionalsOnJob'])->name('api.jobs.applicants');
     Route::get('confirm/endOfShift', [DashboardController::class, 'confirmEndOfShift']);
-    Route::get('mark/tasks', [DashboardController::class, 'markTask']);
+    Route::post('mark/tasks', [DashboardController::class, 'markTask']);
 
     // Route::prefix('notifications')->middleware('throttle:30,1')->group(function () {
     Route::prefix('notifications')->group(function () {
