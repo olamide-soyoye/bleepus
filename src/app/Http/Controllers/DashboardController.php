@@ -19,56 +19,103 @@ class DashboardController extends Controller
 {
     use HttpResponses;
 
+    // public function getProfessionalsOnJob() {
+    //     $user_id = Auth::id();
+    //     if (Auth::user()->user_type_id == Constants::$business) {
+    //         $business = Profile::with("user","business")->where('user_id', $user_id)->first();
+    //         $businessId = $business["business"]["id"];
+            
+    //         $jobApplicants = JobApplicant::join("job_listings", "job_applicants.job_listing_id","job_listings.id")
+    //         ->join("businesses","job_listings.business_id","businesses.id")
+    //         ->join("profiles","businesses.profile_id","profiles.id")
+    //         ->join("professionals","job_applicants.professional_id","professionals.id")
+    //         ->join("users","professionals.user_id","users.id")
+    //         ->leftJoin("tasks", "job_listings.id", "=", "tasks.job_listing_id")
+    //         ->select(
+    //             'professionals.id as professionalId',
+    //             'professionals.user_id',
+    //             'professionals.profile_id',
+    //             'professionals.max_distance',
+    //             'professionals.profession_title',
+    //             'professionals.skills',
+    //             'professionals.certifications',
+    //             'professionals.years_of_experience',
+    //             'professionals.wage',
+    //             'professionals.ratings',
+    //             'professionals.specialities',
+
+    //             'job_listings.id as jobId',
+    //             'job_listings.job_title',
+    //             'job_listings.job_description',
+    //             'job_listings.wage',
+    //             'job_listings.business_id',
+    //             'job_listings.availability',
+    //             'job_listings.job_type_id',
+    //             'job_listings.duration',
+    //             'job_listings.start_date',
+    //             'job_listings.end_date',
+    //             'job_listings.qualifications',
+    //             'job_listings.urgency',
+    //             'job_listings.tasks',
+    //             'job_listings.payment_status',  
+
+    //             "profiles.phone_no","profiles.total_earnings","profiles.longitude", "profiles.latitude","profiles.id as profileId",
+    //             "profiles.about","users.fname","users.lname", "users.id as UserId")
+    //             ->where("job_listings.business_id", $businessId)
+    //             ->where("job_applicants.status", "Hired")
+    //             ->where("job_applicants.isDone", false)
+    //             ->orderBy('job_listings.job_title')
+    //             ->orderBy('job_listings.id')
+    //             ->get();
+
+    //         // return $jobApplicants;
+    //         $pendingCount = JobListing::where('business_id', $businessId)->where('status', 'Published')->count();
+
+    //         $totalCount = JobListing::where('business_id', $businessId)->count();
+
+    //         $hiredCount = JobListing::where('business_id', $businessId)->where('status', 'Occupied')->count();
+
+
+    //         // Prepare the response
+    //         $response = [
+    //             'pending' => $pendingCount,
+    //             'total' => $totalCount,
+    //             'hired' => $hiredCount,
+    //         ];
+    //         // return $response;
+    //         if ($jobApplicants) {
+    //             $data = [
+    //                 "analytics" => $response,
+    //                 "workingProfessional"=>$jobApplicants->isEmpty() ? [] : $this->formatGetApplicantsList($jobApplicants)
+    //             ];
+    //             return $this->success([
+    //                 $data,
+    //             ], 200);
+    //         }
+    //     } 
+    //     return $this->error('Error', 'Only Healthcare Providers can view jobs applicants', 400);
+    // }
     public function getProfessionalsOnJob() {
         $user_id = Auth::id();
         if (Auth::user()->user_type_id == Constants::$business) {
             $business = Profile::with("user","business")->where('user_id', $user_id)->first();
             $businessId = $business["business"]["id"];
-            
-            $jobApplicants = JobApplicant::join("job_listings", "job_applicants.job_listing_id","job_listings.id")
-            ->join("businesses","job_listings.business_id","businesses.id")
-            ->join("profiles","businesses.profile_id","profiles.id")
-            ->join("professionals","job_applicants.professional_id","professionals.id")
-            ->join("users","professionals.user_id","users.id")
-            ->leftJoin("tasks", "job_listings.id", "=", "tasks.job_listing_id")
-            ->select(
-                'professionals.id as professionalId',
-                'professionals.user_id',
-                'professionals.profile_id',
-                'professionals.max_distance',
-                'professionals.profession_title',
-                'professionals.skills',
-                'professionals.certifications',
-                'professionals.years_of_experience',
-                'professionals.wage',
-                'professionals.ratings',
-                'professionals.specialities',
-
-                'job_listings.id as jobId',
-                'job_listings.job_title',
-                'job_listings.job_description',
-                'job_listings.wage',
-                'job_listings.business_id',
-                'job_listings.availability',
-                'job_listings.job_type_id',
-                'job_listings.duration',
-                'job_listings.start_date',
-                'job_listings.end_date',
-                'job_listings.qualifications',
-                'job_listings.urgency',
-                'job_listings.tasks',
-                'job_listings.payment_status',  
-
-                "profiles.phone_no","profiles.total_earnings","profiles.longitude", "profiles.latitude","profiles.id as profileId",
-                "profiles.about","users.fname","users.lname", "users.id as UserId")
-                ->where("job_listings.business_id", $businessId)
+            // return $businessId;
+            $jobApplicants = JobApplicant::with(
+                "jobListing",
+                "jobListing.business",
+                "jobListing.tasks",
+                "professional",
+                "professional.profile",
+                "professional.profile.user"
+                )
+                ->whereHas('jobListing', function($query) use ($businessId) {
+                    $query->where('business_id', $businessId);
+                })
                 ->where("job_applicants.status", "Hired")
                 ->where("job_applicants.isDone", false)
-                ->orderBy('job_listings.job_title')
-                ->orderBy('job_listings.id')
                 ->get();
-
-            // return $jobApplicants;
+            
             $pendingCount = JobListing::where('business_id', $businessId)->where('status', 'Published')->count();
 
             $totalCount = JobListing::where('business_id', $businessId)->count();
@@ -86,10 +133,14 @@ class DashboardController extends Controller
             if ($jobApplicants) {
                 $data = [
                     "analytics" => $response,
-                    "workingProfessional"=>$jobApplicants->isEmpty() ? [] : $this->formatGetApplicantsList($jobApplicants)
+                    "workingProfessional"=>$jobApplicants->isEmpty() ? [] :$jobApplicants 
                 ];
-                return $this->success([
-                    $data,
+                // return $this->success([
+                //     $data,
+                // ], 200);
+                return response()->json([
+                    'message'=>"Request was successful",
+                    'data'=>$data,
                 ], 200);
             }
         } 
@@ -193,7 +244,7 @@ class DashboardController extends Controller
 
     public function showWorkProgress (Request $request) {
         $jobListing = JobListing::with("tasks")->where('id',$request->jobId)->first();
-        $professional = Professional::where('id', $request->professionalId)->first();
+        $professional = Professional::with("user")->where('id', $request->professionalId)->first();
 
         $response = [
             "jobDetails"=>$jobListing,
@@ -201,7 +252,11 @@ class DashboardController extends Controller
         ];
 
         if ($jobListing && $professional) {
-            return $this->success([$response], 200);
+            // return $this->success([$response], 200);
+            return response()->json([
+                'message'=>"Request was successful",
+                'data'=>$response,
+            ], 200);
         }
     }
 

@@ -165,7 +165,7 @@ class JobListingController extends Controller
 
     public function getJobsById(Request $request){
         try {
-            $job = JobListing::with("business", "business.profile","tasks")
+            $job = JobListing::with("business", "business.profile","business.profile.user","tasks")
                 ->findOrFail($request->jobId);
 
             return $this->success([

@@ -193,7 +193,13 @@ class JobApplicantController extends Controller
                 'professional_id' => $professionalId,
                 'job_listing_id' => $jobId,
             ];
-            
+
+            $someOneOnJob = JobApplicant::where(['job_listing_id' => $jobId, 'status'=>"Hired"])->first();
+
+            if ($someOneOnJob) {
+                return $this->error('Error', 'A professional is already Hired for this shift', 400);
+            }
+
             $hireOrReject = $this->updateJobApplicantStatus($conditions, $decision);
 
             if ($decision === "Hired") {
@@ -217,8 +223,8 @@ class JobApplicantController extends Controller
     private function updateJobApplicantStatus(array $conditions, string $decision)
     {
         return JobApplicant::where($conditions)->update(['status' => $decision]);
-    }
-
+    } 
+    
     private function getJobDetails(array $conditions)
     {
         return JobApplicant::with('jobListing', 'professional.user', 'jobListing.business.profile')->where($conditions)->get()[0] ?? null;
@@ -351,9 +357,13 @@ class JobApplicantController extends Controller
                     "analytics" => $response,
                     "jobsHiredFor"=>$jobsHiredFor->isEmpty() ? [] : $jobsHiredFor
                 ];
-                return $this->success([
-                    $data,
-                ], 200); 
+                return response()->json([
+                    'message'=>"Request was successful",
+                    'data'=>$data,
+                ], 200);
+                // return $this->success([
+                //     $data,
+                // ], 200); 
             }
         } 
         return $this->error('Error', 'Only Healthcare Professionals can view jobs hired for', 400);
