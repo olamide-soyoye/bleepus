@@ -57,20 +57,9 @@ class DashboardController extends Controller
                 'job_listings.qualifications',
                 'job_listings.urgency',
                 'job_listings.tasks',
-                'job_listings.payment_status', 
+                'job_listings.payment_status',  
 
-                // DB::raw('(SELECT COUNT(*) FROM tasks) as tasks_count'),
-                // DB::raw('(SELECT COUNT(*) FROM tasks WHERE tasks.isCompleted = 1) as completed_tasks'),
-
-                // DB::raw('
-                //     (CASE WHEN (SELECT COUNT(*) FROM tasks WHERE tasks.job_listing_id = job_listings.id) > 0
-                //         THEN (SELECT COUNT(*) FROM tasks WHERE tasks.job_listing_id = job_listings.id AND tasks.isCompleted = 1) * 100 /
-                //             (SELECT COUNT(*) FROM tasks WHERE tasks.job_listing_id = job_listings.id)
-                //         ELSE 0
-                //     END) as completion_percentage'
-                // ), 
-
-                "profiles.phone_no","profiles.total_earnings","profiles.longitude", "profiles.latitude",
+                "profiles.phone_no","profiles.total_earnings","profiles.longitude", "profiles.latitude","profiles.id as profileId",
                 "profiles.about","users.fname","users.lname", "users.id as UserId")
                 ->where("job_listings.business_id", $businessId)
                 ->where("job_applicants.status", "Hired")
@@ -107,50 +96,98 @@ class DashboardController extends Controller
         return $this->error('Error', 'Only Healthcare Providers can view jobs applicants', 400);
     }
 
-    private function formatGetApplicantsList ($jobApplicants) {
-        $data = [
-            'job_listings' => [
-                'id' => $jobApplicants[0]->jobId,
-                'job_title' => $jobApplicants[0]->job_title,
-                'job_description' => $jobApplicants[0]->job_description,
-                'wage' => $jobApplicants[0]->wage,
-                'availability' => $jobApplicants[0]->availability,
-                'duration' => $jobApplicants[0]->duration,
-                'start_date' => $jobApplicants[0]->start_date,
-                'end_date' => $jobApplicants[0]->end_date,
-                'qualifications' => $jobApplicants[0]->qualifications,
-                'urgency' => $jobApplicants[0]->urgency,
-                'tasks' => $jobApplicants[0]->tasks,
-                'payment_status' => $jobApplicants[0]->payment_status,
-            ],
-            'professionals' => [
-                'id' => $jobApplicants[0]->professionalId,
-                'max_distance' => $jobApplicants[0]->max_distance,
-                'total_earnings' => $jobApplicants[0]->total_earnings,
-                'skills' => $jobApplicants[0]->skills,
-                'certifications' => $jobApplicants[0]->certifications,
-                'years_of_experience' => $jobApplicants[0]->years_of_experience,
-                'wage' => $jobApplicants[0]->wage,
-                'ratings' => $jobApplicants[0]->ratings,
-                'specialities' => $jobApplicants[0]->specialities,
-            ],
-            'profiles' => [
-                'phone_no' => $jobApplicants[0]->phone_no,
-                'total_earnings' => $jobApplicants[0]->total_earnings,
-                'longitude' => $jobApplicants[0]->longitude,
-                'latitude' => $jobApplicants[0]->latitude,
-                'about' => $jobApplicants[0]->about,
-            ],
-            'users' => [
-                'fname' => $jobApplicants[0]->fname,
-                'lname' => $jobApplicants[0]->lname,
-                'id' => $jobApplicants[0]->UserId
-            ],
-            // 'tasks' => [
-            //     'title' => $jobApplicants[0]->title,
-            //     'isCompleted' => $jobApplicants[0]->isCompleted,
-            // ],
-        ];
+    // private function formatGetApplicantsList ($jobApplicants) {
+    //     $data = [
+    //         'job_listings' => [
+    //             'id' => $jobApplicants[0]->jobId,
+    //             'job_title' => $jobApplicants[0]->job_title,
+    //             'job_description' => $jobApplicants[0]->job_description,
+    //             'wage' => $jobApplicants[0]->wage,
+    //             'availability' => $jobApplicants[0]->availability,
+    //             'duration' => $jobApplicants[0]->duration,
+    //             'start_date' => $jobApplicants[0]->start_date,
+    //             'end_date' => $jobApplicants[0]->end_date,
+    //             'qualifications' => $jobApplicants[0]->qualifications,
+    //             'urgency' => $jobApplicants[0]->urgency,
+    //             'tasks' => $jobApplicants[0]->tasks,
+    //             'payment_status' => $jobApplicants[0]->payment_status,
+    //         ],
+    //         'professionals' => [
+    //             'id' => $jobApplicants[0]->professionalId,
+    //             'max_distance' => $jobApplicants[0]->max_distance,
+    //             'total_earnings' => $jobApplicants[0]->total_earnings,
+    //             'skills' => $jobApplicants[0]->skills,
+    //             'certifications' => $jobApplicants[0]->certifications,
+    //             'years_of_experience' => $jobApplicants[0]->years_of_experience,
+    //             'wage' => $jobApplicants[0]->wage,
+    //             'ratings' => $jobApplicants[0]->ratings,
+    //             'specialities' => $jobApplicants[0]->specialities,
+    //         ],
+    //         'profiles' => [
+    //             'phone_no' => $jobApplicants[0]->phone_no,
+    //             'total_earnings' => $jobApplicants[0]->total_earnings,
+    //             'longitude' => $jobApplicants[0]->longitude,
+    //             'latitude' => $jobApplicants[0]->latitude,
+    //             'about' => $jobApplicants[0]->about,
+    //         ],
+    //         'users' => [
+    //             'fname' => $jobApplicants[0]->fname,
+    //             'lname' => $jobApplicants[0]->lname,
+    //             'id' => $jobApplicants[0]->UserId
+    //         ],
+    //         // 'tasks' => [
+    //         //     'title' => $jobApplicants[0]->title,
+    //         //     'isCompleted' => $jobApplicants[0]->isCompleted,
+    //         // ],
+    //     ];
+    //     return $data;
+    // }
+
+    private function formatGetApplicantsList($jobApplicants) {
+        $data = [];
+    
+        foreach ($jobApplicants as $applicant) {
+            $jobData = [
+                'id' => $applicant->jobId,
+                'job_title' => $applicant->job_title,
+                'job_description' => $applicant->job_description,
+                'wage' => $applicant->wage,
+                'availability' => $applicant->availability,
+                'duration' => $applicant->duration,
+                'start_date' => $applicant->start_date,
+                'end_date' => $applicant->end_date,
+                'qualifications' => $applicant->qualifications,
+                'urgency' => $applicant->urgency,
+                'payment_status' => $applicant->payment_status,
+                'professionals' => [
+                    'id' => $applicant->professionalId,
+                    'max_distance' => $applicant->max_distance,
+                    'total_earnings' => $applicant->total_earnings,
+                    'skills' => $applicant->skills,
+                    'certifications' => $applicant->certifications,
+                    'years_of_experience' => $applicant->years_of_experience,
+                    'wage' => $applicant->wage,
+                    'ratings' => $applicant->ratings,
+                    'specialities' => $applicant->specialities,
+                ],
+                'profiles' => [
+                    'id' => $applicant->profileId,
+                    'phone_no' => $applicant->phone_no,
+                    'total_earnings' => $applicant->total_earnings,
+                    'longitude' => $applicant->longitude,
+                    'latitude' => $applicant->latitude,
+                    'about' => $applicant->about,
+                ],
+                'users' => [
+                    'id' => $applicant->UserId,
+                    'fname' => $applicant->fname,
+                    'lname' => $applicant->lname
+                ],
+            ];
+        
+            array_push($data, $jobData);
+        }
+    
         return $data;
     }
 

@@ -49,7 +49,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::get('appliedto', [JobApplicantController::class, 'getAllJobsAppliedFor'])->name('api.jobs.appliedto');
         Route::get('hired', [JobApplicantController::class, 'getAllJobsHiredFor'])->name('api.job.hired');
         Route::get('applicants', [JobApplicantController::class, 'getApplicants'])->name('api.jobs.applicants');
-        Route::get('by/id', [JobListingController::class, 'getJobsById'])->name('api.jobs.by.id');
+        Route::post('by/id', [JobListingController::class, 'getJobsById'])->name('api.jobs.by.id');
         Route::post('hireorreject/professional', [JobApplicantController::class, 'hireOrRejectProfessionals'])->name('api.hireorreject.job.applicant'); 
     });
     Route::get('working/professionals', [DashboardController::class, 'getProfessionalsOnJob'])->name('api.jobs.applicants');
