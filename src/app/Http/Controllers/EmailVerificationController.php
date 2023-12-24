@@ -24,7 +24,7 @@ class EmailVerificationController extends Controller
 
         $user = User::where('id',$user_id)->first();
         $emailVerification = EmailVerification::where(['user_id' => $user_id, 'used'=>false])->first();
-        // return $emailVerification;
+        // return $emailVerification
         if (!$emailVerification) {
             return $this->error('Error', 'OTP no longer active', 400);
         }

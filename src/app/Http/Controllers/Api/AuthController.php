@@ -175,7 +175,7 @@ class AuthController extends Controller
 
             if ($sendOtp !== true) {
                 DB::rollBack();
-                return $this->error('Error', 'Error sending OTP email', 500);
+                return $sendOtp; //$this->error('Error', 'Error sending OTP email', 500);
             }
 
             DB::commit(); 
