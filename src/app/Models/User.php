@@ -12,7 +12,7 @@ use Netsells\GeoScope\Traits\GeoScopeTrait;
 use Illuminate\Support\Str;
 use Illuminate\Auth\Passwords\CanResetPassword;
 
-class User extends Authenticatable
+class User extends Authenticatable implements MustVerifyEmail
 {
     use HasApiTokens, HasFactory, Notifiable, CanResetPassword;
     use GeoScopeTrait;

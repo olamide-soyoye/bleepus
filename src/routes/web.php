@@ -1,5 +1,8 @@
 <?php
 
+use App\Mail\VerificationEmail;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -16,3 +19,13 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', function () {
     return view('welcome');
 });
+
+// Route::get('/email-test', function () {
+//     $name = "Olamide";
+
+//     Mail::to('olamide@gmail.com')->send(new VerificationEmail($name));
+// });
+
+// Auth::routes([
+//     'verify'=> true
+// ]);

@@ -4,9 +4,11 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\EmailVerificationController;
 use App\Http\Controllers\JobApplicantController;
 use App\Http\Controllers\JobListingController;
 use App\Http\Controllers\NotificationController;
+use Illuminate\Support\Facades\Auth;
 
 /*
 |--------------------------------------------------------------------------
@@ -24,7 +26,10 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 });
 
 // Route::middleware(['auth:sanctum', 'throttle:60,1'])->group(function () {
-Route::middleware(['auth:sanctum'])->group(function () {
+// Auth::routes([
+//     'verify'=> true
+// ]);
+Route::middleware(['auth:sanctum', 'email_verified'])->group(function () {
     //logout
     Route::post('auth/logout', [ Api\AuthController::class, 'logout'])->name('api.auth.logout');
 
@@ -75,11 +80,12 @@ Route::middleware(['auth:sanctum'])->group(function () {
 Route::get('user/types', [ Api\UserController::class, 'userTypes' ])->name('api.user.types');
 // Route::get('user/types', [ Api\UserController::class, 'userTypes' ])->middleware('throttle:5,1')->name('api.user.types');
 Route::get('/test', [ Api\UserController::class, 'test' ])->name('api.test');
-// Route::get('/test', [ Api\UserController::class, 'test' ])->middleware('throttle:5,1')->name('api.test');
 
 // Route::prefix('auth')->middleware('throttle:5,1')->group(function () { 
 Route::prefix('auth')->group(function () { 
     Route::post('/register', [ Api\AuthController::class, 'register'])->name('api.auth.register');
+    Route::post('/verify/email', [ EmailVerificationController::class, 'verify'])->name('api.auth.verify.email');
+    Route::post('/resend/otp', [ Api\AuthController::class, 'resendOtp'])->name('api.auth.resend.otp');
     Route::post('/login',[ Api\AuthController::class, 'login' ])->name('api.auth.login');
     Route::get('/forgot-password', [Api\ResetPasswordController::class, 'reset'])->name('password.reset');
     Route::post('/forgot-password', [Api\PasswordResetController::class, '__invoke']);

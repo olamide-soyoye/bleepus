@@ -13,15 +13,18 @@ use App\Enums\TokenAbility;
 use App\Models\Business;
 use App\Models\Professional;
 use App\Http\Requests\RegisterRequest;
+use App\Models\EmailVerification;
 use App\Models\Notification;
 use App\Models\Profile;
 use App\Traits\HttpResponses;
 use Constants;
 use Exception;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Validation\Rules\Password;
 use Illuminate\Validation\ValidationException;
 use OpenApi\Annotations as OA;
+use Illuminate\Support\Str;
 
 // Swagger Link:  http://127.0.0.1:8000/api/documentation#/Register/Register
 class AuthController extends Controller
@@ -160,19 +163,102 @@ class AuthController extends Controller
                 $additionalData['business'] = $business;
             }
 
-            DB::commit();
+            // DB::commit();
+            $createOtp = $this->createOtp($user->id);
+
+            if ($createOtp === 'OTP Not Created') {
+                DB::rollBack();
+                return $this->error('Error', 'OTP Not Created', 500);
+            }
+
+            $sendOtp= $this->sendOtp($user, $createOtp);
+
+            if ($sendOtp !== true) {
+                DB::rollBack();
+                return $this->error('Error', 'Error sending OTP email', 500);
+            }
+
+            DB::commit(); 
 
             return $this->success([
                 'user' => $user,
                 'additional_data' => $additionalData,
                 'token' => $token,
             ], 201);
+            
         } catch (Exception $e) {
             DB::rollBack();
 
             return $this->error('Error', "An error occurred: " . $e->getMessage(), 500);
         }
+    } 
+
+    private function createOtp($userId) {
+        $otp = random_int(100000, 999999);
+        $expiry = now()->addMinutes(30);
+
+        $verification = EmailVerification::firstOrNew(['user_id' => $userId]);
+        $verification->otp = Hash::make($otp);
+        $verification->expiry = $expiry;
+
+        if ($verification->save()) {
+            return $otp;
+        }
+
+        return "OTP Not Created";
+    } 
+    
+    private function sendOtp($user, $otp) {
+        try {
+            Mail::to($user->email)->send(new \App\Mail\VerificationEmail($user->fname, $otp));
+            return true;
+        } catch (\Exception $e) { 
+            return $e;
+        }
     }
+
+    
+    public function resendOtp(Request $request) { 
+        $user = User::find($request->user_id);
+
+        if (!$user) {
+            return $this->error('Error', 'User not found', 400);
+        }
+
+        $otp = $this->createAndSendOtp($user);
+
+        if ($otp === 'OTP Not Created') {
+            return $this->error('Error', $otp, 400);
+        }
+
+        if ($otp === 'OTP not sent. Retry') {
+            return $this->error('Error', $otp, 400);
+        }
+
+        return $this->success(['message' => 'Email Verification Email Sent Successfully'], 200);
+    }
+
+    private function createAndSendOtp(User $user) {
+        try {
+            $otp = $this->createOtp($user->id);
+            // return $otp;
+            if ($otp === 'OTP Not Created') {
+                return $otp;
+            }
+
+            $sendOtp = $this->sendOtp($user, $otp);
+            // return $sendOtp;
+            if (!$sendOtp) {
+                return 'OTP not sent. Retry!';
+            }
+            // Indicates success
+            return null;
+        } catch (\Exception $e) {
+            // Handle exceptions (e.g., log, report, etc.)
+            return 'An error occurred during OTP creation and sending.';
+        }
+    }
+
 
 
     private function validator($request){
