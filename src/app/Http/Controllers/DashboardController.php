@@ -244,7 +244,7 @@ class DashboardController extends Controller
 
     public function showWorkProgress (Request $request) {
         $jobListing = JobListing::with("tasks")->where('id',$request->jobId)->first();
-        $professional = Professional::with("user")->where('id', $request->professionalId)->first();
+        $professional = Professional::with("user","profile")->where('id', $request->professionalId)->first();
 
         $response = [
             "jobDetails"=>$jobListing,
@@ -303,18 +303,15 @@ class DashboardController extends Controller
 
         $subject = "Job completion Notice! ";
 
-        $body = "
-            Hello $businessName, I have completed all the tasks listed in the $jobTitle shift you hired me for.
-            Thanks.
-            
-            $applicantName
-        ";
+        $body = "Hello $businessName, I have completed all the tasks listed in the $jobTitle shift you hired me for.
+            Thanks. $applicantName ";
 
         $notify = Notification::create([
             'business_id' => $businessId,
             'subject' => $subject,
             'body' => $body,
-            'job_id' => $jobId
+            'job_id' => $jobId,
+            'job_type' => "system"
         ]);
 
         if (!$notify) {
@@ -339,18 +336,18 @@ class DashboardController extends Controller
         $applicantName = $details[0]['professional']['user']['fname'] ?? null . ' ' . $details[0]['professional']['user']['lname'] ?? null;
         // $jobPostingDate = Carbon::parse($details[0]['created_at'])->format('M jS, Y');
 
-        $subject = "Job completion Notice! ";
+        $subject = "Job completion Notice!";
 
         $body = "
-            Hello $applicantName, $businessName confirmed that you have completed all the tasks listed for $jobTitle that you were hired for.
-            
+            Hello $applicantName, $businessName confirmed that you have completed all the tasks listed for $jobTitle that you were hired for. 
         ";
 
         $notify = Notification::create([
             'professional_id' => $professionalId,
             'subject' => $subject,
             'body' => $body,
-            'job_id' => $jobId
+            'job_id' => $jobId,
+            'job_type' => "system"
         ]);
 
         if (!$notify) {
