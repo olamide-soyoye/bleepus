@@ -291,7 +291,6 @@ class AuthController extends Controller
         ]);
         if(!Auth::attempt($request->only(['email', 'password']))){
             return $this->error('Error', "Email or Password does not match with our record.", 500);
-            // return response()->json('Email or Password does not match with our record.');
         }
 
         $user = User::with("business","professional","profile")->where('email', $request->email)->first();

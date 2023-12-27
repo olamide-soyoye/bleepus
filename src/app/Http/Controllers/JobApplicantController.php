@@ -88,7 +88,8 @@ class JobApplicantController extends Controller
             'professional_id' => $professionalId,
             'subject' => $subject,
             'body' => $body,
-            'job_id' => $validatedData["jobId"]
+            'job_id' => $validatedData["jobId"],
+            'job_type' => "system"
         ]);
 
         if (!$notify) {
@@ -163,7 +164,7 @@ class JobApplicantController extends Controller
                 'job_listings.payment_status',
 
                 "profiles.phone_no","profiles.total_earnings","profiles.longitude", "profiles.latitude","profiles.id as profileId",
-                "profiles.about","users.fname","users.lname", "users.id as UserId")
+                "profiles.about","profiles.profile_pic","users.fname","users.lname", "users.id as UserId")
                 ->where("job_listings.business_id", $businessId)
                 ->where("job_applicants.status","!=", "Hired")
                 ->orderBy('job_listings.job_title')
@@ -204,6 +205,7 @@ class JobApplicantController extends Controller
 
             if ($decision === "Hired") {
                 Professional::where('id',$professionalId)->update(['status'=>'Occupied']);
+                JobListing::where('id',$jobId)->update(['start_date'=>now()]);
             }
 
             if ($hireOrReject) {
@@ -223,6 +225,7 @@ class JobApplicantController extends Controller
     private function updateJobApplicantStatus(array $conditions, string $decision)
     {
         return JobApplicant::where($conditions)->update(['status' => $decision]);
+        
     } 
     
     private function getJobDetails(array $conditions)
@@ -251,6 +254,7 @@ class JobApplicantController extends Controller
             'subject' => $subject,
             'body' => $body,
             'job_id' => $jobId,
+            'job_type' => "job"
         ]);
     }
 
@@ -313,6 +317,7 @@ class JobApplicantController extends Controller
                     'longitude' => $applicant->longitude,
                     'latitude' => $applicant->latitude,
                     'about' => $applicant->about,
+                    'profile_pic' => $applicant->profile_pic
                 ],
                 'users' => [
                     'id' => $applicant->UserId,

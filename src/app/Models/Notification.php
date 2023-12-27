@@ -15,7 +15,8 @@ class Notification extends Model
         'subject',
         'business_id',
         'professional_id',
-        'job_id'
+        'job_id',
+        'job_type'
     ];
 
     public function professional(): HasOne
