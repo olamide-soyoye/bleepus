@@ -19,7 +19,7 @@ class EmailVerifiedMiddleware
     public function handle(Request $request, Closure $next)
     {
         // Check if the user is authenticated and email is not verified
-        if (Auth::check() && Auth::user()->email_verified_at === null) { 
+        if (Auth::check() && Auth::user()->email_verified_at == null) { 
             return response()->json([
                 'message'=>'error',
                 'data'=>"Email not verified!",
@@ -27,7 +27,7 @@ class EmailVerifiedMiddleware
             ], 403);
         }
         //If user is not verified on /auth/login
-        if (User::where('email', $request->email)->first()->email_verified_at === null) { 
+        if (!Auth::check() && User::where('email', $request->email)->first()->email_verified_at == null) { 
             return response()->json([
                 'message'=>'error',
                 'data'=>"Email not verified!",
