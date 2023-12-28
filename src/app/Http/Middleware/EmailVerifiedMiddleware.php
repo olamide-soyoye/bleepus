@@ -26,6 +26,13 @@ class EmailVerifiedMiddleware
                 'resend_otp' => true,
             ], 403);
         }
+        //If user is not verified on /auth/login and does not exist in db
+        if (!Auth::check() && User::where('email', $request->email)->first() == null) { 
+            return response()->json([
+                'message'=>'error',
+                'data'=>"Email or Password does not match with our record.",
+            ], 403);
+        }
         //If user is not verified on /auth/login
         if (!Auth::check() && User::where('email', $request->email)->first()->email_verified_at == null) { 
             return response()->json([
@@ -33,12 +40,9 @@ class EmailVerifiedMiddleware
                 'data'=>"Email not verified!",
                 'resend_otp' => true,
             ], 403);
-        }else{
-            return response()->json([
-                'message'=>'error',
-                'data'=>"Email or Password not found in our database",
-            ], 403);
         }
+
+       
         return $next($request);
     }
 }
