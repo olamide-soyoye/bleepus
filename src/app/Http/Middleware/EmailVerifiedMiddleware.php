@@ -33,6 +33,11 @@ class EmailVerifiedMiddleware
                 'data'=>"Email not verified!",
                 'resend_otp' => true,
             ], 403);
+        }else{
+            return response()->json([
+                'message'=>'error',
+                'data'=>"Email or Password not found in our database",
+            ], 403);
         }
         return $next($request);
     }
