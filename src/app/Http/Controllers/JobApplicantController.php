@@ -89,7 +89,7 @@ class JobApplicantController extends Controller
             'subject' => $subject,
             'body' => $body,
             'job_id' => $validatedData["jobId"],
-            'job_type' => "system"
+            'job_type' => "Job"
         ]);
 
         if (!$notify) {
@@ -254,7 +254,7 @@ class JobApplicantController extends Controller
             'subject' => $subject,
             'body' => $body,
             'job_id' => $jobId,
-            'job_type' => "job"
+            'job_type' => "system"
         ]);
     }
 
