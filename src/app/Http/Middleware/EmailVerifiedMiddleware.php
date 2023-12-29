@@ -34,13 +34,13 @@ class EmailVerifiedMiddleware
             ], 403);
         }
         //If user is not verified on /auth/login
-        if (!Auth::check() && User::where('email', $request->email)->first()->email_verified_at == null) { 
-            return response()->json([
-                'message'=>'error',
-                'data'=>"Email not verified!",
-                'resend_otp' => true,
-            ], 403);
-        }
+        // if (!Auth::check() && User::where('email', $request->email)->first()->email_verified_at == null) { 
+        //     return response()->json([
+        //         'message'=>'error',
+        //         'data'=>"Email not verified!",
+        //         'resend_otp' => true,
+        //     ], 403);
+        // }
 
        
         return $next($request);
