@@ -21,16 +21,16 @@ class EmailVerifiedMiddleware
         // Check if the user is authenticated and email is not verified
         if (Auth::check() && Auth::user()->email_verified_at == null) { 
             return response()->json([
-                'message'=>'error',
-                'data'=>"Email not verified!",
+                'message'=>'Email not verified!',
+                'data'=>"error",
                 'resend_otp' => true,
             ], 403);
         }
         //If user is not verified on /auth/login and does not exist in db
         if (!Auth::check() && User::where('email', $request->email)->first() == null) { 
             return response()->json([
-                'message'=>'error',
-                'data'=>"Email or Password does not match with our record.",
+                'message'=>'Email or Password does not match with our record.',
+                'data'=>"error",
             ], 403);
         }
         //If user is not verified on /auth/login
