@@ -134,9 +134,13 @@ class JobListingController extends Controller
                 'profiles.country_code',
                 'profiles.address',
                 'profiles.agency_code',
-                'profiles.agency_code',
+                'profiles.id as profileId',
+                'users.fname',
+                'users.lname',
+                'users.id as userId',
                 DB::raw("ROUND((ST_Distance_Sphere(point(profiles.longitude, profiles.latitude), point($longitude, $latitude)) / ". Constants::$mileConversion ."),2) AS distance_between")
             )
+            // ->with("business.user","business.profile")
             ->whereRaw($rawQuery)
             ->where('users.user_type_id', Constants::$business);
             // ->with('profile');
@@ -157,10 +161,59 @@ class JobListingController extends Controller
             // $jobsAround = $this->removeUnwantedKeys($jobsAround);
             
             return $this->success([
-                'JobsAround' => $jobsAround->isEmpty() ? [] : $jobsAround,
+                'JobsAround' => $jobsAround->isEmpty() ? [] : $this->formatGetApplicantsList ($jobsAround),
             ], 200);
         }
         return $this->error('Error', 'Only Healthcare Professionals are allowed to view jobs around them them', 400);
+    }
+    private function formatGetApplicantsList($jobAround) {
+        $data = [];
+    
+        foreach ($jobAround as $job) {
+            $jobData = [
+                'id' => $job->id,
+                'company_name' => $job->company_name,
+                'max_distance' => $job->max_distance,
+                'ratings' => $job->ratings,
+                'business_id' => $job->business_id,
+                'job_title' => $job->job_title,
+                'job_description' => $job->job_description,
+                'address' => $job->address,
+                'availability' => $job->availability,
+                'job_type_id' => $job->job_type_id,
+                'wage' => $job->wage,
+                'duration' => $job->duration,
+                'start_date' => $job->start_date,
+                'end_date' => $job->end_date,
+                'qualifications' => $job->qualifications,
+                'urgency' => $job->urgency,
+                'tasks' => $job->tasks,
+                'status' => $job->status,
+                'payment_status' => $job->payment_status, 
+                'profiles' => [
+                    'id' => $job->profileId,
+                    'phone_no' => $job->phone_no,
+                    'total_earnings' => $job->total_earnings,
+                    'longitude' => $job->longitude,
+                    'latitude' => $job->latitude,
+                    'about' => $job->about,
+                    'profile_pic' => $job->profile_pic,
+                    'country_abbr' =>$job->country_abbr,
+                    'country_code' =>$job->country_code,
+                    'agency_code' =>$job->agency_code,
+                ],
+                'users' => [
+                    'id' => $job->userId,
+                    'fname' => $job->fname,
+                    'lname' => $job->lname
+                ],
+                'distance_between' => $job->distance_between
+            ];
+        
+            array_push($data, $jobData);
+        }
+    
+        return $data;
     }
 
     public function getJobsById(Request $request){
@@ -176,5 +229,7 @@ class JobListingController extends Controller
             return $this->error('Error','Job not found', 400);
         }
     }
+
+    
 
 }

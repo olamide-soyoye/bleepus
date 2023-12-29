@@ -303,15 +303,17 @@ class DashboardController extends Controller
 
         $subject = "Job completion Notice! ";
 
-        $body = "Hello $businessName, I have completed all the tasks listed in the $jobTitle shift you hired me for.
-            Thanks. $applicantName ";
+        $body = "Hello $businessName, I have completed all the tasks listed in the $jobTitle shift you hired me for";
+        // $body = "Hello $businessName, I have completed all the tasks listed in the $jobTitle shift you hired me for.
+        // Thanks. $applicantName ";
 
         $notify = Notification::create([
             'business_id' => $businessId,
             'subject' => $subject,
             'body' => $body,
             'job_id' => $jobId,
-            'job_type' => "system"
+            'job_type' => "system",
+            'read' => false
         ]);
 
         if (!$notify) {
@@ -338,16 +340,15 @@ class DashboardController extends Controller
 
         $subject = "Job completion Notice!";
 
-        $body = "
-            Hello $applicantName, $businessName confirmed that you have completed all the tasks listed for $jobTitle that you were hired for. 
-        ";
+        $body = "Hello $applicantName, $businessName confirmed that you have completed all the tasks listed for $jobTitle that you were hired for";
 
         $notify = Notification::create([
             'professional_id' => $professionalId,
             'subject' => $subject,
             'body' => $body,
             'job_id' => $jobId,
-            'job_type' => "system"
+            'job_type' => "system",
+            'read' => false
         ]);
 
         if (!$notify) {

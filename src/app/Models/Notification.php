@@ -24,6 +24,10 @@ class Notification extends Model
         return $this->hasOne(Professional::class, 'id', 'professional_id');
     }
 
+    protected $casts = [
+        'read' => 'boolean',
+    ];
+
     // public function getBodyAttribute($value)
     // {
     //     return json_decode($value, true) ?? '';
