@@ -192,7 +192,7 @@ class JobListingController extends Controller
                 'payment_status' => $job->payment_status, 
                 'longitude' => $job->longitude,
                 'latitude' => $job->latitude,
-                'profiles' => [
+                'profile' => [
                     'id' => $job->profileId,
                     'phone_no' => $job->phone_no,
                     'total_earnings' => $job->total_earnings,
@@ -202,7 +202,7 @@ class JobListingController extends Controller
                     'country_code' =>$job->country_code,
                     'agency_code' =>$job->agency_code,
                 ],
-                'users' => [
+                'user' => [
                     'id' => $job->userId,
                     'fname' => $job->fname,
                     'lname' => $job->lname
