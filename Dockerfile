@@ -33,6 +33,16 @@ WORKDIR /var/www
 # Copy Laravel application files from the src folder
 COPY src/ .
 
+# Run Composer install
+RUN composer install --no-dev
+
+# Run other Artisan commands
+RUN php artisan migrate:fresh --force && \
+    php artisan db:seed --class=UserTypeSeeder --force && \
+    php artisan optimize:clear && \
+    php artisan l5-swagger:generate && \
+    php artisan storage:link
+    
 # Set ownership of the Laravel application files to the laravel user
 RUN chown -R laravel:laravel /var/www
 
