@@ -50,9 +50,6 @@ RUN chown -R laravel:laravel /var/www/storage
 
 RUN chmod -R 775 /var/www/storage
 
-# Switch to the laravel user for runtime
-USER laravel
-
 # Copy Virtual host configuration to sites avalible
 COPY 000-default.conf /etc/apache2/sites-available/000-default.conf
 
