@@ -22,6 +22,17 @@ jobs:
       id: login-ecr
       uses: aws-actions/amazon-ecr-login@v1  
 
+    - name: Run pre-build commands
+      run: |
+        cd src
+        sudo composer install --no-dev &&
+        sudo php artisan migrate:fresh --force  &&
+        sudo php artisan db:seed --class=UserTypeSeeder --force &&
+        sudo php artisan optimize:clear &&
+        sudo php artisan l5-swagger:generate &&
+        sudo php artisan storage:link
+      shell: bash
+      
     - name: Build, tag, and push the image to Amazon ECR
       env:
         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
