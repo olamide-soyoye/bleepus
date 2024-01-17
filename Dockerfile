@@ -29,8 +29,6 @@ RUN mkdir --parents /home/laravel/.composer && \
 # Set working directory
 WORKDIR /var/www
 
-# Ensure our user is not root
-USER laravel
 
 # Copy Laravel application files from the src folder
 COPY src/ .
@@ -51,6 +49,9 @@ RUN chown -R laravel:laravel /var/www
 RUN chown -R laravel:laravel /var/www/storage
 
 RUN chmod -R 775 /var/www/storage
+
+# Switch to the laravel user for runtime
+USER laravel
 
 # Copy Virtual host configuration to sites avalible
 COPY 000-default.conf /etc/apache2/sites-available/000-default.conf
