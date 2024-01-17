@@ -42,9 +42,11 @@ RUN php artisan migrate:fresh --force && \
     php artisan optimize:clear && \
     php artisan l5-swagger:generate && \
     php artisan storage:link
-    
+
 # Set ownership of the Laravel application files to the laravel user
 RUN chown -R laravel:laravel /var/www
+
+RUN chown -R laravel:laravel /var/www/storage
 
 # Copy Virtual host configuration to sites avalible
 COPY 000-default.conf /etc/apache2/sites-available/000-default.conf
