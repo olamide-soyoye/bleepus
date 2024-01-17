@@ -57,8 +57,8 @@ COPY 000-default.conf /etc/apache2/sites-available/000-default.conf
 RUN a2dismod mpm_event && a2enmod mpm_prefork && a2enmod rewrite
 
 # Set Apache environment variables
-ENV APACHE_RUN_USER www-data
-ENV APACHE_RUN_GROUP www-data
+ENV APACHE_RUN_USER laravel
+ENV APACHE_RUN_GROUP laravel
 ENV APACHE_LOG_DIR /var/log/apache2
 ENV APACHE_LOCK_DIR /var/lock/apache2
 ENV APACHE_PID_FILE /var/run/apache2.pid
