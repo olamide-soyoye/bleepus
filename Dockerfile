@@ -29,6 +29,8 @@ RUN mkdir --parents /home/laravel/.composer && \
 # Set working directory
 WORKDIR /var/www
 
+# Ensure our user is not root
+USER laravel
 
 # Copy Laravel application files from the src folder
 COPY src/ .
