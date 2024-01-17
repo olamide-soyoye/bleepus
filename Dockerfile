@@ -29,9 +29,9 @@ RUN mkdir --parents /home/laravel/.composer && \
 # Set working directory
 WORKDIR /var/www
 
-# Copy Laravel application files from the src folder
-COPY src/. .
 
+# Copy Laravel application files from the src folder
+COPY src/ .
 
 # Set ownership of the Laravel application files to the laravel user
 RUN chown -R laravel:laravel /var/www
