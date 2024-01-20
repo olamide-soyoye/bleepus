@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 class JobListing extends Model
 {
     use HasFactory;
+    protected $appends = ['tasksData'];
     protected $fillable = [
         'job_title',
         'job_description',
@@ -48,5 +49,39 @@ class JobListing extends Model
         return $this->hasMany(Task::class, 'job_listing_id');
     }
 
-    
+    public function getTasksDataAttribute()
+    {
+        return $this->tasks()->get();
+    }
+
+
+    public function tasksWithPercentageComplete(){
+        $tasks = $this->tasks; 
+
+        $totalTasks = count($tasks); 
+
+        return $tasks;
+        if ($totalTasks === 0) {
+            return [
+                'tasks' => $tasks,
+                'percentageComplete' => 0,
+            ];
+        }
+
+        $completedTasks = $tasks->filter(function ($task) {
+            return $task->isCompleted;
+        })->count();
+
+        $percentageComplete = ($completedTasks / $totalTasks) * 100;
+
+        return [
+            'tasks' => $tasks,
+            'percentageComplete' => $percentageComplete,
+        ];
+    }
+
+    public function getTasksWithPercentageCompleteAttribute()
+    {
+        return $this->tasksWithPercentageComplete();
+    }   
 }

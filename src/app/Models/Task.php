@@ -21,7 +21,15 @@ class Task extends Model
     protected $casts = [
         'isCompleted' => 'boolean',
     ];
+    // public function jobListing()
+    // {
+    //     return $this->belongsTo(JobListing::class, 'job_listing_id');
+    // }
 
+    public function scopeCompleted($query)
+    {
+        return $query->where('isCompleted', true);
+    }
     // public function getIsCompletedAttribute($value)
     // {
     //     return $value == 1 ? true : false;

@@ -13,6 +13,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
 use App\Traits\HttpResponses;
+use Illuminate\Support\Facades\Mail;
 
 class JobApplicantController extends Controller
 {
@@ -65,7 +66,7 @@ class JobApplicantController extends Controller
             'job_listing_id' => $validatedData["jobId"],
         ];
 
-        $jobDetails = JobApplicant::with('jobListing', 'professional.user', 'jobListing.business.profile')->where($conditions)->get();
+        $jobDetails = JobApplicant::with('jobListing', 'professional.user', 'jobListing.business.profile.user')->where($conditions)->get();
         
         if ($jobDetails->isEmpty()) {
             return $this->error('Error', 'Job details not found', 404);
@@ -73,6 +74,7 @@ class JobApplicantController extends Controller
 
         $businessName = $jobDetails[0]['jobListing']['business']['company_name'] ?? null;
         $businessId = $jobDetails[0]['jobListing']['business']['id'];
+        $business = $jobDetails[0]['jobListing']['business']['profile'];
         $jobTitle = $jobDetails[0]['jobListing']["job_title"] ?? null; 
         $applicantName = $jobDetails[0]['professional']['user']['fname'] ?? null . ' ' . $jobDetails[0]['professional']['user']['lname'] ?? null;
         $jobPostingDate = Carbon::parse($jobDetails[0]['created_at'])->format('M jS, Y');
@@ -81,8 +83,12 @@ class JobApplicantController extends Controller
         // $body = "Hello $businessName, I am interested in the $jobTitle shift you posted on $jobPostingDate. 
         //    Thanks. $applicantName
         // ";
+        // return $business['profile']['user']['email'];
         $body = "Hello $businessName, I am interested in the $jobTitle shift you posted on $jobPostingDate.";
-
+        $sendEmailNotification = $this->sendEmailNotification($business, $subject, $businessName, $jobTitle, $jobPostingDate, $applicantName,'apply');
+        if (!$sendEmailNotification) {
+            return $this->error('Error', 'Email Notification failed', 500);
+        }
         $notify = Notification::create([
             'business_id' => $businessId,
             'professional_id' => $professionalId,
@@ -100,6 +106,19 @@ class JobApplicantController extends Controller
         return $this->success([
             'message' => 'Successfully Applied',
         ], 200);
+    }
+    
+    private function sendEmailNotification($receiver, $subject, $businessName, $jobTitle, $jobPostingDate, $applicantName, $mode='', $body = '') {
+        if ($mode == "apply") { 
+            $body = "I am interested in the $jobTitle shift you posted on $jobPostingDate.";
+        }
+
+        try {
+            Mail::to($receiver['user']['email'])->send(new \App\Mail\NotificationEmail($businessName, $subject, $body, $applicantName));
+            return true;
+        } catch (\Exception $e) { 
+            return $e;
+        }
     }
 
     public function getAllJobsAppliedFor(){
@@ -240,6 +259,7 @@ class JobApplicantController extends Controller
 
 
         $applicantName = $this->getApplicantName($jobDetails);
+        $applicant = $this->getApplicant($jobDetails);
         $jobTitle = $jobDetails['jobListing']["job_title"] ?? null;
         $jobId = $jobDetails['jobListing']["id"] ?? null;
         $applicationDate = Carbon::parse($jobDetails['created_at'])->format('M jS, Y');
@@ -247,8 +267,15 @@ class JobApplicantController extends Controller
         $businessName = $jobDetails['jobListing']['business']['company_name'] ?? null;
         $subject = $decision === 'Hired' ? "Congratulations, you have been hired" : "Sorry, you were not selected";
 
+        
+
         $body = $this->getBodyText($decision, $applicantName, $jobTitle, $applicationDate, $businessPhoneNumber, $businessName);
 
+        $sendEmailNotification = $this->sendEmailNotification($applicant, $subject, $applicantName, $jobTitle, $applicationDate, $businessName,'hire',$body);
+
+        if (!$sendEmailNotification) {
+            return $this->error('Error', 'Email Notification failed', 500);
+        }
         return Notification::create([
             'professional_id' => $professionalId,
             'subject' => $subject,
@@ -263,10 +290,14 @@ class JobApplicantController extends Controller
         return ($jobDetails['professional']['user']['fname'] ?? null) . ' ' . ($jobDetails['professional']['user']['lname'] ?? null);
     }
 
+    private function getApplicant($jobDetails){
+        return ($jobDetails['professional'] ?? null);
+    }
+
     private function getBodyText($decision, $applicantName, $jobTitle, $applicationDate, $businessPhoneNumber, $businessName){
         switch ($decision) {
             case 'Hired':
-                return "You that you have been hired for the $jobTitle shift that you applied for on $applicationDate.";
+                return "You have been hired for the $jobTitle shift that you applied for on $applicationDate.";
             case 'Rejected':
                 return "You were not hired for the $jobTitle shift that you applied for on $applicationDate. We hope to have you with us on some other opportunities";
             default:

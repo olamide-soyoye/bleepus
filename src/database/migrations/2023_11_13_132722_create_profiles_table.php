@@ -23,7 +23,7 @@ return new class extends Migration
             $table->string('country_code')->nullable();
             $table->string('address')->nullable();
             $table->string('agency_code')->nullable();
-            $table->string('about')->nullable();
+            $table->text('about')->nullable();
             $table->string('total_earnings')->nullable();
             $table->string('pending_payment')->nullable();
             $table->string('longitude')->nullable();

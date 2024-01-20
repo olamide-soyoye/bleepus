@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Resources\JobListingResource;
 use App\Models\Business;
 use App\Models\JobApplicant;
 use App\Models\JobListing;
@@ -16,6 +17,8 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Mail;
+
 class JobListingController extends Controller
 {
     use HttpResponses;
@@ -40,7 +43,6 @@ class JobListingController extends Controller
                 return $this->error('Error', 'Please add tasks for the job', 400);
             }
             
-    
             $JobListing = JobListing::create([
                 'job_title' => $validatedData['job_title'],
                 'job_description' => $validatedData['job_description'],
@@ -63,6 +65,11 @@ class JobListingController extends Controller
                     return $this->error('Error', "Unable to add $taskData", 400);
                 }
             }
+
+            $sendEmail = $this->sendJobCreationEmail($validatedData['job_title'], $validatedData['job_description']);
+            if (!$sendEmail) {
+                return $this->error('Error', 'Email Notification failed', 500);
+            }
     
             if ($JobListing) {
                 return $this->success([
@@ -73,6 +80,62 @@ class JobListingController extends Controller
         }
         return $this->error('Error', 'Only Healthcare Providers are allowed to post jobs', 400);
     } 
+
+    // private function sendJobCreationEmail($receiver, $subject, $businessName, $jobTitle, $jobPostingDate, $applicantName, $mode='', $body = '') {
+    private function sendJobCreationEmail($jobTitle, $jobDescription) {
+        $loggedInUserId = Auth::id();
+        $business = Business::with("profile")->where('user_id', $loggedInUserId)->first();
+        // return $business;
+        if (!$business) {
+            return $this->error('Error', 'Unable to find businesses', 400);
+        }
+        
+        $maxDistance = $business->max_distance ? $business->max_distance  : Constants::$defaultDistance;
+        
+        $latitude = (float)$business['profile']->latitude;
+        $longitude = (float)$business['profile']->longitude;
+
+        
+        $rawQuery = "ST_Distance_Sphere(point(profiles.longitude, profiles.latitude),  point($longitude, $latitude))/". Constants::$mileConversion ."<= $maxDistance";
+
+        $query = Professional::join('profiles', 'professionals.profile_id', '=', 'profiles.id')
+        ->join('users', 'professionals.user_id', '=', 'users.id') 
+        ->select(
+            'users.email'
+        )
+        ->whereRaw($rawQuery)
+        ->where('users.user_type_id', Constants::$professional) 
+        ->where('professionals.status', Constants::$availableProfessional); 
+
+        $filteredProfessionals = $query->get(); 
+        $subject = "A new job posted in your area!";
+
+        $recipients = $this->formatEmails($filteredProfessionals);
+        // return $recipients;
+        // $recipients=[
+        //     "olamide5142@gmail.com",
+        //     "temitope5142@gmail.com",
+        //     "akindeolamide1408@gmail.com"
+        // ];
+        try {
+            Mail::to($recipients)->send(new \App\Mail\JobCreationEmail($business->company_name, $subject, $jobTitle, $jobDescription));
+            return true;
+        } catch (\Exception $e) { 
+            return $e;
+        }
+    }
+
+    private function formatEmails($filteredProfessionals) {
+        $formattedEmails = [];
+    
+        foreach ($filteredProfessionals as $professional) {
+            if (isset($professional['email'])) {
+                $formattedEmails[] = $professional['email'];
+            }
+        }
+    
+        return $formattedEmails;
+    }
 
     public function getPostedJobs(Request $request){
         $user_id = Auth::id();
@@ -220,15 +283,19 @@ class JobListingController extends Controller
         try {
             $job = JobListing::with("business", "business.profile","business.profile.user","tasks")
                 ->findOrFail($request->jobId);
-
+                // $jobList = JobListingResource::collection($job->get()); 
+                $jobList = new JobListingResource($job);
+                // return $jobList;
             return $this->success([
-                'job' => $job,
+                'job' => $jobList,
             ], 200);
 
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             return $this->error('Error','Job not found', 400);
         }
     }
+
+    
 
     
 

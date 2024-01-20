@@ -17,7 +17,7 @@ return new class extends Migration
             $table->id();
             $table->integer('business_id')->nullable();
             $table->string('job_title')->nullable();
-            $table->string('job_description')->nullable();
+            $table->text('job_description')->nullable();
             $table->string('address')->nullable();
             $table->string('availability')->nullable();
             $table->integer('job_type_id')->nullable();

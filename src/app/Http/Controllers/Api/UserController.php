@@ -309,7 +309,7 @@ class UserController extends Controller
         } catch (ModelNotFoundException $e) {
             return $this->error('Unable to update profile', $e, 404);
         } catch (\Exception $e) {
-            return $this->error('Unable to update profile', $e, 500);
+            return $this->error('Unable to update profile', $e, 400);
         }
     }
 
