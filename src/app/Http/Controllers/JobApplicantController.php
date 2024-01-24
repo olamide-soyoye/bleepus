@@ -77,18 +77,20 @@ class JobApplicantController extends Controller
         $applicantName = $jobDetails[0]['professional']['user']['fname'] ?? null . ' ' . $jobDetails[0]['professional']['user']['lname'] ?? null;
         $jobPostingDate = Carbon::parse($jobDetails[0]['created_at'])->format('M jS, Y');
 
-        $subject = "Hello $businessName, I am interested in your shift offer! ";
-        $body = "
-            Hello $businessName, I am interested in the $jobTitle shift you posted on $jobPostingDate. 
-           Thanks. $applicantName
-        ";
+        $subject = "$applicantName is interested in your shift offer! ";
+        // $body = "Hello $businessName, I am interested in the $jobTitle shift you posted on $jobPostingDate. 
+        //    Thanks. $applicantName
+        // ";
+        $body = "Hello $businessName, I am interested in the $jobTitle shift you posted on $jobPostingDate.";
 
         $notify = Notification::create([
             'business_id' => $businessId,
             'professional_id' => $professionalId,
             'subject' => $subject,
             'body' => $body,
-            'job_id' => $validatedData["jobId"]
+            'job_id' => $validatedData["jobId"],
+            'job_type' => "Job",
+            'read' => false
         ]);
 
         if (!$notify) {
@@ -163,7 +165,7 @@ class JobApplicantController extends Controller
                 'job_listings.payment_status',
 
                 "profiles.phone_no","profiles.total_earnings","profiles.longitude", "profiles.latitude","profiles.id as profileId",
-                "profiles.about","users.fname","users.lname", "users.id as UserId")
+                "profiles.about","profiles.profile_pic","users.fname","users.lname", "users.id as UserId")
                 ->where("job_listings.business_id", $businessId)
                 ->where("job_applicants.status","!=", "Hired")
                 ->orderBy('job_listings.job_title')
@@ -204,9 +206,10 @@ class JobApplicantController extends Controller
 
             if ($decision === "Hired") {
                 Professional::where('id',$professionalId)->update(['status'=>'Occupied']);
+                JobListing::where('id',$jobId)->update(['start_date'=>now(), 'status'=>'Occupied']);
             }
 
-            if ($hireOrReject) {
+            if ($hireOrReject) { 
                 $jobDetails = $this->getJobDetails($conditions);
 
                 $notification = $this->createNotification($professionalId, $decision, $jobDetails);
@@ -216,13 +219,13 @@ class JobApplicantController extends Controller
                 }
             }
         }
-
         return $this->error('Error', 'Only Healthcare Providers can hire', 400);
     }
 
     private function updateJobApplicantStatus(array $conditions, string $decision)
     {
         return JobApplicant::where($conditions)->update(['status' => $decision]);
+         
     } 
     
     private function getJobDetails(array $conditions)
@@ -251,6 +254,8 @@ class JobApplicantController extends Controller
             'subject' => $subject,
             'body' => $body,
             'job_id' => $jobId,
+            'job_type' => "system",
+            'read' => false
         ]);
     }
 
@@ -261,22 +266,31 @@ class JobApplicantController extends Controller
     private function getBodyText($decision, $applicantName, $jobTitle, $applicationDate, $businessPhoneNumber, $businessName){
         switch ($decision) {
             case 'Hired':
-                return "Hello $applicantName;
-
-                        We are pleased to inform you that you have been hired for the $jobTitle shift that you applied for
-                        on $applicationDate. Please call $businessPhoneNumber for detailed information.
-
-                        $businessName";
+                return "You that you have been hired for the $jobTitle shift that you applied for on $applicationDate.";
             case 'Rejected':
-                return "Hello $applicantName; 
-                
-                        We are sorry to inform you that you were not hired for the $jobTitle shift that you applied for
-                        on $applicationDate. We hope to have you with us on some other opportunities. 
-
-                        $businessName";
+                return "You were not hired for the $jobTitle shift that you applied for on $applicationDate. We hope to have you with us on some other opportunities";
             default:
                 return '';
         }
+
+        // switch ($decision) {
+        //     case 'Hired':
+        //         return "Hello $applicantName;
+
+        //                 We are pleased to inform you that you have been hired for the $jobTitle shift that you applied for
+        //                 on $applicationDate. Please call $businessPhoneNumber for detailed information.
+
+        //                 $businessName";
+        //     case 'Rejected':
+        //         return "Hello $applicantName; 
+                
+        //                 We are sorry to inform you that you were not hired for the $jobTitle shift that you applied for
+        //                 on $applicationDate. We hope to have you with us on some other opportunities. 
+
+        //                 $businessName";
+        //     default:
+        //         return '';
+        // }
     }
 
     private function formatGetApplicantsList($jobApplicants) {
@@ -313,6 +327,7 @@ class JobApplicantController extends Controller
                     'longitude' => $applicant->longitude,
                     'latitude' => $applicant->latitude,
                     'about' => $applicant->about,
+                    'profile_pic' => $applicant->profile_pic
                 ],
                 'users' => [
                     'id' => $applicant->UserId,

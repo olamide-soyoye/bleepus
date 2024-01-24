@@ -15,13 +15,18 @@ class Notification extends Model
         'subject',
         'business_id',
         'professional_id',
-        'job_id'
+        'job_id',
+        'job_type'
     ];
 
     public function professional(): HasOne
     {
         return $this->hasOne(Professional::class, 'id', 'professional_id');
     }
+
+    protected $casts = [
+        'read' => 'boolean',
+    ];
 
     // public function getBodyAttribute($value)
     // {

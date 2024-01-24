@@ -87,10 +87,14 @@ Route::prefix('auth')->group(function () {
     Route::post('/verify/email', [ EmailVerificationController::class, 'verify'])->name('api.auth.verify.email');
     Route::post('/resend/otp', [ Api\AuthController::class, 'resendOtp'])->name('api.auth.resend.otp');
     Route::post('/login',[ Api\AuthController::class, 'login' ])->name('api.auth.login');
+    // Route::post('/login',[ Api\AuthController::class, 'login' ])->name('api.auth.login')->middleware(['email_verified']);
     Route::get('/forgot-password', [Api\ResetPasswordController::class, 'reset'])->name('password.reset');
     Route::post('/forgot-password', [Api\PasswordResetController::class, '__invoke']);
     // Route::post('/reset-password', [Api\PasswordResetController::class, 'resetPassword'])->name('password.update');
 });
+// Route::middleware(['email_verified'])->group(function () { 
+//     Route::post('/auth/login',[ Api\AuthController::class, 'login' ])->name('api.auth.login');
+// });
 
 Route::get('/swagger', function () {
     return view('swagger.index');
