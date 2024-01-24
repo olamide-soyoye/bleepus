@@ -83,7 +83,6 @@ class JobApplicantController extends Controller
         // $body = "Hello $businessName, I am interested in the $jobTitle shift you posted on $jobPostingDate. 
         //    Thanks. $applicantName
         // ";
-        // return $business['profile']['user']['email'];
         $body = "Hello $businessName, I am interested in the $jobTitle shift you posted on $jobPostingDate.";
         $sendEmailNotification = $this->sendEmailNotification($business, $subject, $businessName, $jobTitle, $jobPostingDate, $applicantName,'apply');
         if (!$sendEmailNotification) {
