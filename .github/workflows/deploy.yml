@@ -2,7 +2,7 @@ name: handyman Deploy
 
 on:
   push:
-    branches: [ eks ]
+    branches: [ main ]
   
 jobs:
   deploy:
