@@ -80,10 +80,7 @@ class JobApplicantController extends Controller
         $jobPostingDate = Carbon::parse($jobDetails[0]['created_at'])->format('M jS, Y');
 
         $subject = "$applicantName is interested in your shift offer! ";
-        // $body = "Hello $businessName, I am interested in the $jobTitle shift you posted on $jobPostingDate. 
-        //    Thanks. $applicantName
-        // ";
-        // return $business['profile']['user']['email'];
+        
         $body = "Hello $businessName, I am interested in the $jobTitle shift you posted on $jobPostingDate.";
         $sendEmailNotification = $this->sendEmailNotification($business, $subject, $businessName, $jobTitle, $jobPostingDate, $applicantName,'apply');
         if (!$sendEmailNotification) {
@@ -373,7 +370,6 @@ class JobApplicantController extends Controller
         return $data;
     }
     
-
     public function getAllJobsHiredFor(){
         $user_id = Auth::id();
         if (Auth::user()->user_type_id == Constants::$professional) {
