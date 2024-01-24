@@ -37,10 +37,9 @@ COPY src/ .
 RUN composer install --no-dev
 
 # Run other Artisan commands
-RUN php artisan migrate:fresh --force && \
+RUN php artisan migrate --force && \
     php artisan db:seed --class=UserTypeSeeder --force && \
-    php artisan optimize:clear && \
-    php artisan l5-swagger:generate && \
+    php artisan optimize:clear && \ 
     php artisan storage:link
 
 # Set ownership of the Laravel application files to the laravel user
