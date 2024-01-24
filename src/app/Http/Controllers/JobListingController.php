@@ -108,7 +108,7 @@ class JobListingController extends Controller
         ->where('professionals.status', Constants::$availableProfessional); 
 
         $filteredProfessionals = $query->get(); 
-        $subject = "A new job posted in your area!";
+        $subject = "A new job has been posted in your area!";
 
         $recipients = $this->formatEmails($filteredProfessionals);
         // return $recipients;

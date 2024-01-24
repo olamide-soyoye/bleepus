@@ -14,6 +14,7 @@ use Carbon\Carbon;
 use Constants;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 
 class DashboardController extends Controller
 {
@@ -289,13 +290,14 @@ class DashboardController extends Controller
 
     private function notifyBusinessOfCompletion ($jobId, $conditions) {
 
-        $jobDetails = JobApplicant::with('jobListing', 'professional.user', 'jobListing.business.profile')->where($conditions)->get();
+        $jobDetails = JobApplicant::with('jobListing', 'professional.user', 'jobListing.business.profile.user')->where($conditions)->get();
         
         if ($jobDetails->isEmpty()) {
             return $this->error('Error', 'Job details not found', 404);
         }
 
         $businessName = $jobDetails[0]['jobListing']['business']['company_name'] ?? null;
+        $business = $jobDetails[0]['jobListing']['business']['user'] ?? null;
         $businessId = $jobDetails[0]['jobListing']['business']['id'];
         $jobTitle = $jobDetails[0]['jobListing']["job_title"] ?? null; 
         $applicantName = $jobDetails[0]['professional']['user']['fname'] ?? null . ' ' . $jobDetails[0]['professional']['user']['lname'] ?? null;
@@ -306,7 +308,10 @@ class DashboardController extends Controller
         $body = "Hello $businessName, I have completed all the tasks listed in the $jobTitle shift you hired me for";
         // $body = "Hello $businessName, I have completed all the tasks listed in the $jobTitle shift you hired me for.
         // Thanks. $applicantName ";
-
+        $sendMail = $this->sendEndOfShiftEmail($business, $subject, $businessName, $jobTitle, $applicantName);
+        if (!$sendMail) {
+            return $this->error('Error', 'Email Notification failed', 500);
+        }
         $notify = Notification::create([
             'business_id' => $businessId,
             'subject' => $subject,
@@ -320,9 +325,28 @@ class DashboardController extends Controller
             return $this->error('Error', 'Notification creation failed', 500);
         }
 
+        $sendMail = $this->sendEndOfShiftEmail($business, $subject, $businessName, $jobTitle, $applicantName);
+        if (!$sendMail) {
+            return $this->error('Error', 'Email Notification failed', 500);
+        }
+
         return $this->success([
             'message' => "A notification is sent to $businessName",
         ], 200);
+    }
+
+    private function sendEndOfShiftEmail($receiver, $subject, $receiverName, $jobTitle, $senderName, $action='') {
+        if($action == 'notifyApplicant'){
+            $body = "We confirmed that you have completed all the tasks listed for $jobTitle that you were hired for";
+        }else{
+            $body = "I have completed all the tasks listed in the $jobTitle shift you hired me for";
+        }
+        try {
+            Mail::to($receiver['email'])->send(new \App\Mail\EndOfShiftEmail($receiverName, $subject, $body, $senderName));
+            return true;
+        } catch (\Exception $e) { 
+            return $e;
+        }
     }
 
     private function confirmEndOfShiftNotificationForProfessional ($professionalId, $jobId, $conditions) {
@@ -337,11 +361,11 @@ class DashboardController extends Controller
         $jobTitle = $details[0]['jobListing']["job_title"] ?? null; 
         $applicantName = $details[0]['professional']['user']['fname'] ?? null . ' ' . $details[0]['professional']['user']['lname'] ?? null;
         // $jobPostingDate = Carbon::parse($details[0]['created_at'])->format('M jS, Y');
-
-        $subject = "Job completion Notice!";
+        $applicant = $details[0]['professional']['user'];
+        $subject = "Job Completion Notice!";
 
         $body = "Hello $applicantName, $businessName confirmed that you have completed all the tasks listed for $jobTitle that you were hired for";
-
+        
         $notify = Notification::create([
             'professional_id' => $professionalId,
             'subject' => $subject,
@@ -353,6 +377,11 @@ class DashboardController extends Controller
 
         if (!$notify) {
             return $this->error('Error', 'Notification not sent', 500);
+        }
+
+        $sendMail = $this->sendEndOfShiftEmail($applicant, $subject, $applicantName, $jobTitle, $businessName, 'notifyApplicant');
+        if (!$sendMail) {
+            return $this->error('Error', 'Email Notification failed', 500);
         }
 
         return $this->success([

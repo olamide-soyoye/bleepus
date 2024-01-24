@@ -59,8 +59,8 @@
       <a href="https://bleepus.com/" style="font-size:1.4em;color: #57c7a0;text-decoration:none;font-weight:600">Bleepus</a>
     </div>
     <p style="font-size:1.1em">Hi {{$name}},</p>
-    <!-- <p>{{$body}}</p> -->
-    <p class="otp-box">{{$body}}</p>
+    <p>{{$body}}</p>
+    <!-- <p class="otp-box">{{$body}}</p> -->
     <p style="font-size:0.9em;">Regards,<br />{{$applicantName}}.</p> <br>
     <!-- <p>Notification sent</p> -->
 

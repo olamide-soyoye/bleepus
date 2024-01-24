@@ -56,16 +56,16 @@
 <body>
   <div class="container">
     <div class="header">
-      <a href="" style="font-size:1.4em;color: #57c7a0;text-decoration:none;font-weight:600">Bleepus</a>
+      <a href="https://bleepus.com/" style="font-size:1.4em;color: #57c7a0;text-decoration:none;font-weight:600">Bleepus</a>
     </div>
-    <p style="font-size:1.1em">Dear Bleepus Professional</p>
+    <p style="font-size:1.1em">Dear Bleepus Professional,</p>
     <p>This is to notify you that {{$name}} has posted a job availability for: 
         <br> 
         <strong>Job Title:</strong> {{$jobTitle}}
         <br> 
         <strong>Job Description:</strong> {{$jobDescription}}
     </p>
-    <p style="font-size:0.9em;">Regards,<br />Bleepus</p>
+    <p style="font-size:0.9em;">Regards,<br />Bleepus.</p>
     <hr style="border:none;border-top:1px solid #eee" />
     <div style="float:right;padding:8px 0;color:#aaa;font-size:0.8em;line-height:1;font-weight:300">
       <p>Bleepus Technology Inc</p>
