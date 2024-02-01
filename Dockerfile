@@ -38,7 +38,7 @@ RUN composer install --no-dev
 
 # Run other Artisan commands
 RUN php artisan migrate --force && \
-    php artisan db:seed --class=UserTypeSeeder --force && \
+   php artisan db:seed --class=UserSeeder --force && \
     php artisan optimize:clear && \ 
     php artisan storage:link
 
