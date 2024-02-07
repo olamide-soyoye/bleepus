@@ -27,7 +27,7 @@ class JobListingController extends Controller
         $user_id = Auth::id();
         if (Auth::user()->user_type_id == Constants::$business) {
             $business = Business::where('user_id', $user_id)->first();
-            
+            return $business;
             try {
                 $validatedData = $request->validate([
                     'job_title' => 'required|string|max:255',
